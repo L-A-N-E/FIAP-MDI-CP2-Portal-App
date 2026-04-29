@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import Swiper from 'react-native-swiper';
 import { useAuth } from '../../context/AuthContext';
 import { classroom } from '../../data/classroom.data';
@@ -38,7 +38,7 @@ export default function Home() {
     }).slice(0, 3);
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
 
             {/* Header — agora usa user do AuthContext */}
             <View style={styles.header}>
@@ -114,7 +114,7 @@ export default function Home() {
                 </View>
             </View>
 
-        </View>
+        </ScrollView>
     );
 }
 
