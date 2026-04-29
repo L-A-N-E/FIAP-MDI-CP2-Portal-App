@@ -497,13 +497,18 @@ export default function Bulletin() {
                                             <Text
                                                 style={[
                                                     s.cellText,
-                                                    calcCpMedia(g) === "-" && s.empty,
+                                                    calcCpMedia(g) === "-" &&
+                                                        s.empty,
                                                 ]}
                                             >
                                                 {calcCpMedia(g)}
                                             </Text>
                                             <Ionicons
-                                                name={isTeacher ? "create-outline" : "eye-outline"}
+                                                name={
+                                                    isTeacher
+                                                        ? "create-outline"
+                                                        : "eye-outline"
+                                                }
                                                 size={10}
                                                 color="#FF0C5C"
                                                 style={s.icon}
@@ -515,6 +520,34 @@ export default function Bulletin() {
                                     <View style={s.bodyCell}>
                                         <Text style={s.cellText}>-</Text>
                                     </View>
+                                    {/* 2º sem — CP repete a mesma média */}
+                                    <TouchableOpacity
+                                        style={s.bodyCell}
+                                        onPress={() => abrirCpModal(subject)}
+                                        activeOpacity={0.6}
+                                    >
+                                        <View style={s.badge}>
+                                            <Text
+                                                style={[
+                                                    s.cellText,
+                                                    calcCpMedia(g) === "-" &&
+                                                        s.empty,
+                                                ]}
+                                            >
+                                                {calcCpMedia(g)}
+                                            </Text>
+                                            <Ionicons
+                                                name={
+                                                    isTeacher
+                                                        ? "create-outline"
+                                                        : "eye-outline"
+                                                }
+                                                size={10}
+                                                color="#FF0C5C"
+                                                style={s.icon}
+                                            />
+                                        </View>
+                                    </TouchableOpacity>
                                     <Celula field="gs2" cor="#039855" />
                                     <Celula field="fa2" />
                                     <View style={s.bodyCell}>
@@ -525,13 +558,34 @@ export default function Bulletin() {
                                     {/* Presença calculada */}
                                     <View style={s.bodyCell}>
                                         {(() => {
-                                            const faltas = parseInt(g.faltas);
+                                            const faltas = parseInt(
+                                                g.faltas ?? "0",
+                                            );
                                             const pr = isNaN(faltas)
-                                                ? "-"
-                                                : Math.max(0, Math.round(((TOTAL_AULAS - faltas) / TOTAL_AULAS) * 100)) + "%";
-                                            const baixa = !isNaN(faltas) && ((TOTAL_AULAS - faltas) / TOTAL_AULAS) < 0.75;
+                                                ? "100%"
+                                                : Math.max(
+                                                      0,
+                                                      Math.round(
+                                                          ((TOTAL_AULAS -
+                                                              faltas) /
+                                                              TOTAL_AULAS) *
+                                                              100,
+                                                      ),
+                                                  ) + "%";
+                                            const baixa =
+                                                !isNaN(faltas) &&
+                                                (TOTAL_AULAS - faltas) /
+                                                    TOTAL_AULAS <
+                                                    0.75;
                                             return (
-                                                <Text style={[s.cellText, baixa && { color: "#e53935" }]}>
+                                                <Text
+                                                    style={[
+                                                        s.cellText,
+                                                        baixa && {
+                                                            color: "#e53935",
+                                                        },
+                                                    ]}
+                                                >
                                                     {pr}
                                                 </Text>
                                             );
@@ -544,9 +598,16 @@ export default function Bulletin() {
                                         <Text style={s.cellText}>-</Text>
                                     </View>
                                     <View style={s.bodyCell}>
-                                        <Text style={[s.cellText, s.headerPinkText]}>-</Text>
+                                        <Text
+                                            style={[
+                                                s.cellText,
+                                                s.headerPinkText,
+                                            ]}
+                                        >
+                                            -
+                                        </Text>
                                     </View>
-                                    <View style={s.bodyCell}>
+                                    <View style={s.situationHeader}>
                                         <Text style={s.cellText}>-</Text>
                                     </View>
                                 </View>
@@ -603,121 +664,194 @@ export default function Bulletin() {
             </Modal>
 
             <Modal visible={cpModal} transparent animationType="fade">
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                <View style={s.modalOverlay}>
-                    <View style={s.modal}>
-                        <View style={s.modalHeader}>
-                            <Text style={s.modalTitle}>
-                                Checkpoints
-                            </Text>
-                            <TouchableOpacity onPress={() => setCpModal(false)}>
-                                <Ionicons name="close" size={20} color="#FF0C5C" />
-                            </TouchableOpacity>
-                        </View>
-                        <Text style={s.modalSubtitle} numberOfLines={2}>
-                            {cpSubject}
-                        </Text>
-
-                        {isTeacher ? (
-                            <>
-                                <Text style={s.modalLabel}>CP1</Text>
-                                <TextInput
-                                    style={s.modalInput}
-                                    value={cpVals[1]}
-                                    onChangeText={(v) => setCpVals((p) => ({ ...p, 1: v }))}
-                                    placeholder="Ex: 7.5"
-                                    placeholderTextColor={colors.textMuted}
-                                    keyboardType="numeric"
-                                />
-                                <Text style={s.modalLabel}>CP2</Text>
-                                <TextInput
-                                    style={s.modalInput}
-                                    value={cpVals[2]}
-                                    onChangeText={(v) => setCpVals((p) => ({ ...p, 2: v }))}
-                                    placeholder="Ex: 8.0"
-                                    placeholderTextColor={colors.textMuted}
-                                    keyboardType="numeric"
-                                />
-                                <Text style={s.modalLabel}>CP3</Text>
-                                <TextInput
-                                    style={s.modalInput}
-                                    value={cpVals[3]}
-                                    onChangeText={(v) => setCpVals((p) => ({ ...p, 3: v }))}
-                                    placeholder="Ex: 6.0"
-                                    placeholderTextColor={colors.textMuted}
-                                    keyboardType="numeric"
-                                />
-                                <Text style={[s.modalSubtitle, { marginTop: 6 }]}>
-                                    Média (2 maiores):{" "}
-                                    <Text style={{ fontWeight: "bold", color: "#FF0C5C" }}>
-                                        {(() => {
-                                            const vals = [1, 2, 3]
-                                                .map((l) => parseFloat(cpVals[l]))
-                                                .filter((v) => !isNaN(v));
-                                            if (vals.length === 0) return "-";
-                                            const sorted = [...vals].sort((a, b) => b - a).slice(0, 2);
-                                            return (sorted.reduce((s, v) => s + v, 0) / sorted.length).toFixed(1);
-                                        })()}
-                                    </Text>
-                                </Text>
-                                <View style={s.modalBtns}>
-                                    <TouchableOpacity
-                                        style={s.modalBtnCancel}
-                                        onPress={() => setCpModal(false)}
-                                    >
-                                        <Text style={s.modalBtnCancelText}>Cancelar</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={s.modalBtnSave}
-                                        onPress={salvarCp}
-                                        disabled={savingCp}
-                                    >
-                                        {savingCp ? (
-                                            <ActivityIndicator color="#fff" />
-                                        ) : (
-                                            <Text style={s.modalBtnSaveText}>Salvar</Text>
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
-                            </>
-                        ) : (
-                            <>
-                                {[1, 2, 3].map((l) => {
-                                    const g = grades?.[cpSubject] || DEFAULT_GRADES;
-                                    const val = g[`cp${l}`] ?? "-";
-                                    return (
-                                        <View key={l} style={s.cpDetailRow}>
-                                            <Text style={s.cpDetailLabel}>CP{l}</Text>
-                                            <Text style={[s.cpDetailVal, val === "-" && s.empty]}>
-                                                {val}
-                                            </Text>
-                                        </View>
-                                    );
-                                })}
-                                {(() => {
-                                    const g = grades?.[cpSubject] || DEFAULT_GRADES;
-                                    const media = calcCpMedia(g);
-                                    return (
-                                        <View style={[s.cpDetailRow, { borderTopWidth: 1, borderTopColor: colors.separator, marginTop: 8, paddingTop: 12 }]}>
-                                            <Text style={[s.cpDetailLabel, { color: "#FF0C5C" }]}>
-                                                Média (2 maiores)
-                                            </Text>
-                                            <Text style={[s.cpDetailVal, { color: "#FF0C5C" }]}>
-                                                {media}
-                                            </Text>
-                                        </View>
-                                    );
-                                })()}
+                <TouchableWithoutFeedback
+                    onPress={Keyboard.dismiss}
+                    accessible={false}
+                >
+                    <View style={s.modalOverlay}>
+                        <View style={s.modal}>
+                            <View style={s.modalHeader}>
+                                <Text style={s.modalTitle}>Checkpoints</Text>
                                 <TouchableOpacity
-                                    style={[s.closeBtn, { marginTop: 16 }]}
                                     onPress={() => setCpModal(false)}
                                 >
-                                    <Text style={s.closeBtnText}>Fechar</Text>
+                                    <Ionicons
+                                        name="close"
+                                        size={20}
+                                        color="#FF0C5C"
+                                    />
                                 </TouchableOpacity>
-                            </>
-                        )}
+                            </View>
+                            <Text style={s.modalSubtitle} numberOfLines={2}>
+                                {cpSubject}
+                            </Text>
+
+                            {isTeacher ? (
+                                <>
+                                    <Text style={s.modalLabel}>CP1</Text>
+                                    <TextInput
+                                        style={s.modalInput}
+                                        value={cpVals[1]}
+                                        onChangeText={(v) =>
+                                            setCpVals((p) => ({ ...p, 1: v }))
+                                        }
+                                        placeholder="Ex: 7.5"
+                                        placeholderTextColor={colors.textMuted}
+                                        keyboardType="numeric"
+                                    />
+                                    <Text style={s.modalLabel}>CP2</Text>
+                                    <TextInput
+                                        style={s.modalInput}
+                                        value={cpVals[2]}
+                                        onChangeText={(v) =>
+                                            setCpVals((p) => ({ ...p, 2: v }))
+                                        }
+                                        placeholder="Ex: 8.0"
+                                        placeholderTextColor={colors.textMuted}
+                                        keyboardType="numeric"
+                                    />
+                                    <Text style={s.modalLabel}>CP3</Text>
+                                    <TextInput
+                                        style={s.modalInput}
+                                        value={cpVals[3]}
+                                        onChangeText={(v) =>
+                                            setCpVals((p) => ({ ...p, 3: v }))
+                                        }
+                                        placeholder="Ex: 6.0"
+                                        placeholderTextColor={colors.textMuted}
+                                        keyboardType="numeric"
+                                    />
+                                    <Text
+                                        style={[
+                                            s.modalSubtitle,
+                                            { marginTop: 6 },
+                                        ]}
+                                    >
+                                        Média (2 maiores):{" "}
+                                        <Text
+                                            style={{
+                                                fontWeight: "bold",
+                                                color: "#FF0C5C",
+                                            }}
+                                        >
+                                            {(() => {
+                                                const vals = [1, 2, 3]
+                                                    .map((l) =>
+                                                        parseFloat(cpVals[l]),
+                                                    )
+                                                    .filter((v) => !isNaN(v));
+                                                if (vals.length === 0)
+                                                    return "-";
+                                                const sorted = [...vals]
+                                                    .sort((a, b) => b - a)
+                                                    .slice(0, 2);
+                                                return (
+                                                    sorted.reduce(
+                                                        (s, v) => s + v,
+                                                        0,
+                                                    ) / sorted.length
+                                                ).toFixed(1);
+                                            })()}
+                                        </Text>
+                                    </Text>
+                                    <View style={s.modalBtns}>
+                                        <TouchableOpacity
+                                            style={s.modalBtnCancel}
+                                            onPress={() => setCpModal(false)}
+                                        >
+                                            <Text style={s.modalBtnCancelText}>
+                                                Cancelar
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={s.modalBtnSave}
+                                            onPress={salvarCp}
+                                            disabled={savingCp}
+                                        >
+                                            {savingCp ? (
+                                                <ActivityIndicator color="#fff" />
+                                            ) : (
+                                                <Text
+                                                    style={s.modalBtnSaveText}
+                                                >
+                                                    Salvar
+                                                </Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            ) : (
+                                <>
+                                    {[1, 2, 3].map((l) => {
+                                        const g =
+                                            grades?.[cpSubject] ||
+                                            DEFAULT_GRADES;
+                                        const val = g[`cp${l}`] ?? "-";
+                                        return (
+                                            <View key={l} style={s.cpDetailRow}>
+                                                <Text style={s.cpDetailLabel}>
+                                                    CP{l}
+                                                </Text>
+                                                <Text
+                                                    style={[
+                                                        s.cpDetailVal,
+                                                        val === "-" && s.empty,
+                                                    ]}
+                                                >
+                                                    {val}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+                                    {(() => {
+                                        const g =
+                                            grades?.[cpSubject] ||
+                                            DEFAULT_GRADES;
+                                        const media = calcCpMedia(g);
+                                        return (
+                                            <View
+                                                style={[
+                                                    s.cpDetailRow,
+                                                    {
+                                                        borderTopWidth: 1,
+                                                        borderTopColor:
+                                                            colors.separator,
+                                                        marginTop: 8,
+                                                        paddingTop: 12,
+                                                    },
+                                                ]}
+                                            >
+                                                <Text
+                                                    style={[
+                                                        s.cpDetailLabel,
+                                                        { color: "#FF0C5C" },
+                                                    ]}
+                                                >
+                                                    Média (2 maiores)
+                                                </Text>
+                                                <Text
+                                                    style={[
+                                                        s.cpDetailVal,
+                                                        { color: "#FF0C5C" },
+                                                    ]}
+                                                >
+                                                    {media}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })()}
+                                    <TouchableOpacity
+                                        style={[s.closeBtn, { marginTop: 16 }]}
+                                        onPress={() => setCpModal(false)}
+                                    >
+                                        <Text style={s.closeBtnText}>
+                                            Fechar
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </View>
                     </View>
-                </View>
                 </TouchableWithoutFeedback>
             </Modal>
             <Modal visible={modalVisible} transparent animationType="fade">
@@ -870,7 +1004,7 @@ function makeStyles(c) {
         },
         situationHeader: {
             width: 96,
-            height: 38,
+            minHeight: 38,
             justifyContent: "center",
             alignItems: "center",
             borderLeftWidth: 1,
