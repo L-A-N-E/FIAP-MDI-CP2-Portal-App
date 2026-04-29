@@ -1,39 +1,46 @@
 import {
-    View, Text, TextInput, TouchableOpacity,
-    StyleSheet, Image, KeyboardAvoidingView,
-    ScrollView, Platform, ActivityIndicator
-} from 'react-native';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
-import { useAuth } from '../../context/AuthContext';
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    Image,
+    KeyboardAvoidingView,
+    ScrollView,
+    Platform,
+    ActivityIndicator,
+} from "react-native";
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
     const router = useRouter();
     const { login } = useAuth();
 
-    const [email, setEmail] = useState('');
-    const [senha, setSenha] = useState('');
+    const [email, setEmail] = useState("");
+    const [senha, setSenha] = useState("");
     const [erros, setErros] = useState({});
     const [loading, setLoading] = useState(false);
-    const [erroGeral, setErroGeral] = useState('');
+    const [erroGeral, setErroGeral] = useState("");
 
     function validar() {
         const novosErros = {};
         if (!email.trim()) {
-            novosErros.email = 'O e-mail é obrigatório.';
+            novosErros.email = "O e-mail é obrigatório.";
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            novosErros.email = 'Formato de e-mail inválido.';
+            novosErros.email = "Formato de e-mail inválido.";
         }
         if (!senha) {
-            novosErros.senha = 'A senha é obrigatória.';
+            novosErros.senha = "A senha é obrigatória.";
         } else if (senha.length < 6) {
-            novosErros.senha = 'A senha deve ter no mínimo 6 caracteres.';
+            novosErros.senha = "A senha deve ter no mínimo 6 caracteres.";
         }
         return novosErros;
     }
 
     async function handleLogin() {
-        setErroGeral('');
+        setErroGeral("");
         const novosErros = validar();
         setErros(novosErros);
         if (Object.keys(novosErros).length > 0) return;
@@ -54,14 +61,14 @@ export default function Login() {
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <ScrollView
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled"
             >
                 <Image
-                    source={require('../../assets/FIAP.png')}
+                    source={require("../../assets/FIAP.png")}
                     style={styles.logo}
                     resizeMode="contain"
                 />
@@ -83,7 +90,7 @@ export default function Login() {
                         onChangeText={(v) => {
                             setEmail(v);
                             setErros((prev) => ({ ...prev, email: undefined }));
-                            setErroGeral('');
+                            setErroGeral("");
                         }}
                     />
                     {erros.email && (
@@ -102,7 +109,7 @@ export default function Login() {
                         onChangeText={(v) => {
                             setSenha(v);
                             setErros((prev) => ({ ...prev, senha: undefined }));
-                            setErroGeral('');
+                            setErroGeral("");
                         }}
                     />
                     {erros.senha && (
@@ -131,11 +138,11 @@ export default function Login() {
 
                 {/* Link para cadastro */}
                 <TouchableOpacity
-                    onPress={() => router.push('/(auth)/register')}
+                    onPress={() => router.push("/(auth)/register")}
                     style={styles.linkContainer}
                 >
                     <Text style={styles.linkTexto}>
-                        Não tem conta?{' '}
+                        Não tem conta?{" "}
                         <Text style={styles.linkDestaque}>Cadastre-se</Text>
                     </Text>
                 </TouchableOpacity>
@@ -147,9 +154,9 @@ export default function Login() {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: '#f5f5f5',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: "#f5f5f5",
+        alignItems: "center",
+        justifyContent: "center",
         padding: 24,
     },
     logo: {
@@ -159,76 +166,76 @@ const styles = StyleSheet.create({
     },
     titulo: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         marginBottom: 6,
-        color: '#171717',
+        color: "#171717",
     },
     subtitulo: {
         fontSize: 14,
-        color: '#666',
+        color: "#666",
         marginBottom: 32,
-        textAlign: 'center',
+        textAlign: "center",
     },
     campo: {
-        width: '100%',
+        width: "100%",
         marginBottom: 16,
     },
     label: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#333',
+        fontWeight: "600",
+        color: "#333",
         marginBottom: 6,
     },
     input: {
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: "#ddd",
         borderRadius: 10,
         paddingHorizontal: 14,
         paddingVertical: 12,
         fontSize: 15,
-        color: '#171717',
+        color: "#171717",
     },
     inputErro: {
-        borderColor: '#e53935',
+        borderColor: "#e53935",
     },
     erroInline: {
-        color: '#e53935',
+        color: "#e53935",
         fontSize: 12,
         marginTop: 4,
         marginLeft: 2,
     },
     erroGeral: {
-        color: '#e53935',
+        color: "#e53935",
         fontSize: 13,
         marginBottom: 12,
-        textAlign: 'center',
+        textAlign: "center",
     },
     botao: {
-        width: '100%',
-        backgroundColor: '#FF0C5C',
+        width: "100%",
+        backgroundColor: "#FF0C5C",
         paddingVertical: 14,
         borderRadius: 10,
-        alignItems: 'center',
+        alignItems: "center",
         marginTop: 8,
     },
     botaoDesabilitado: {
         opacity: 0.5,
     },
     botaoTexto: {
-        color: '#fff',
+        color: "#fff",
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: "bold",
     },
     linkContainer: {
         marginTop: 20,
     },
     linkTexto: {
         fontSize: 14,
-        color: '#666',
+        color: "#666",
     },
     linkDestaque: {
-        color: '#FF0C5C',
-        fontWeight: 'bold',
+        color: "#FF0C5C",
+        fontWeight: "bold",
     },
 });

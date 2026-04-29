@@ -4,15 +4,15 @@
 
 export const mockUsers = [
     {
-        name: "Nicolas",
-        last_name: "Haubricht",
-        rm: "556259",
+        name: "Guilherme",
+        last_name: "Melo",
+        rm: "998877",
         course: "Engenharia de Software",
         semester: "3º Ano",
         period: "Matutino",
         class: "3ESPH",
-        email: "rm556259@fiap.com.br",
-        senha: "fiap123",
+        email: "rm998877@fiap.com.br",
+        senha: "123456",
         unidade: "FIAP Paulista",
     },
     // Adicione mais usuários aqui:
