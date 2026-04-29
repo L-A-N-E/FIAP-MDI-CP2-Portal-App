@@ -130,7 +130,8 @@ export default function CompleteProfile() {
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 20}
         >
             <ScrollView
                 contentContainerStyle={[
@@ -275,8 +276,9 @@ const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         padding: 24,
+        paddingBottom: 40,
     },
     logo: { width: 140, height: 60, marginBottom: 24 },
     titulo: { fontSize: 24, fontWeight: "bold", marginBottom: 6 },
