@@ -1,11 +1,42 @@
 import {
-    View, Text, StyleSheet, Image,
-    TouchableOpacity, ScrollView
+    View,
+    Text,
+    StyleSheet,
+    Image,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Profile() {
     const { user, logout } = useAuth();
+    
+    // Estado para armazenar a foto de perfil escolhida pelo usuário
+    const [avatarUri, setAvatarUri] = useState(null);
+
+    // Função para escolher imagem da galeria
+    const pickImage = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,           // um pouco menor para melhor performance
+            });
+
+            if (!result.canceled) {
+                setAvatarUri(result.assets[0].uri);
+                // Aqui você pode futuramente fazer upload para o servidor
+                // await uploadProfilePicture(result.assets[0].uri);
+            }
+        } catch (error) {
+            Alert.alert('Erro', 'Não foi possível abrir a galeria.');
+        }
+    };
 
     function InfoRow({ label, value }) {
         return (
@@ -29,13 +60,26 @@ export default function Profile() {
                 <Text style={styles.title}>Meu Perfil</Text>
             </View>
 
-            {/* Avatar / iniciais */}
+            {/* Avatar com botão para trocar foto */}
             <View style={styles.avatarContainer}>
-                <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                        {user?.name?.[0]?.toUpperCase() ?? '?'}
-                    </Text>
-                </View>
+                <TouchableOpacity onPress={pickImage} activeOpacity={0.8}>
+                    <View style={styles.avatarWrapper}>
+                        <Image
+                            source={
+                                avatarUri 
+                                    ? { uri: avatarUri }
+                                    : require('../../assets/undefined.jpg') // ou use uma imagem padrão
+                            }
+                            style={styles.avatar}
+                            resizeMode="cover"
+                        />
+                        {/* Ícone de câmera sobreposto */}
+                        <View style={styles.cameraIconContainer}>
+                            <Ionicons name="camera" size={20} color="#fff" />
+                        </View>
+                    </View>
+                </TouchableOpacity>
+
                 <Text style={styles.nomeCompleto}>
                     {user?.name} {user?.last_name}
                 </Text>
@@ -91,19 +135,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: 20,
     },
-    avatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#FF0C5C',
-        alignItems: 'center',
-        justifyContent: 'center',
+    avatarWrapper: {
+        position: 'relative',
         marginBottom: 12,
     },
-    avatarText: {
-        color: '#fff',
-        fontSize: 32,
-        fontWeight: 'bold',
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 2,
+        borderColor: '#FF0C5C',
+    },
+    cameraIconContainer: {
+        position: 'absolute',
+        bottom: 4,
+        right: 4,
+        backgroundColor: '#FF0C5C',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
     },
     nomeCompleto: {
         fontSize: 20,
@@ -121,6 +175,10 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         padding: 20,
         elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     cardTitulo: {
         fontSize: 16,
@@ -131,7 +189,7 @@ const styles = StyleSheet.create({
     infoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 10,
+        paddingVertical: 12,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
     },
@@ -146,7 +204,7 @@ const styles = StyleSheet.create({
     },
     logoutContainer: {
         margin: 20,
-        marginTop: 24,
+        marginTop: 30,
     },
     botaoLogout: {
         backgroundColor: '#FF0C5C',
