@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
 import { AuthProvider, useAuth } from "../context/AuthContext";
+import { ThemeProvider } from "../context/ThemeContext";
 
 function RootLayout() {
     const { user, isLoading, needsProfileCompletion } = useAuth();
@@ -15,13 +16,10 @@ function RootLayout() {
         const inCompletarPerfil = segments[1] === "complete_profile";
 
         if (!user && !inAuthGroup) {
-            // Não logado fora da área de auth → login
             router.replace("/(auth)/login");
         } else if (user && needsProfileCompletion && !inCompletarPerfil) {
-            // Cadastrou mas ainda não completou o perfil → completar-perfil
             router.replace("/(auth)/complete_profile");
         } else if (user && !needsProfileCompletion && inAuthGroup) {
-            // Logado e perfil completo ainda em auth → tabs
             router.replace("/(tabs)/");
         }
     }, [user, isLoading, needsProfileCompletion, segments]);
@@ -40,7 +38,11 @@ function RootLayout() {
         );
     }
 
-    return <Stack screenOptions={{ headerShown: false }} />;
+    return (
+        <ThemeProvider userEmail={user?.email}>
+            <Stack screenOptions={{ headerShown: false }} />
+        </ThemeProvider>
+    );
 }
 
 export default function Layout() {

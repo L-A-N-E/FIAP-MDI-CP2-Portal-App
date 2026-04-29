@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 function Campo({
     label,
@@ -22,13 +23,25 @@ function Campo({
     keyboardType,
     erros,
     setErros,
+    colors,
 }) {
     return (
         <View style={styles.campo}>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
             <TextInput
-                style={[styles.input, erros[campoKey] && styles.inputErro]}
+                style={[
+                    styles.input,
+                    erros[campoKey] && styles.inputErro,
+                    {
+                        backgroundColor: colors.inputBg,
+                        borderColor: erros[campoKey]
+                            ? "#e53935"
+                            : colors.inputBorder,
+                        color: colors.text,
+                    },
+                ]}
                 placeholder={placeholder ?? label}
+                placeholderTextColor={colors.textMuted}
                 value={value}
                 onChangeText={(v) => {
                     onChange(v);
@@ -44,9 +57,9 @@ function Campo({
 
 export default function CompleteProfile() {
     const { completarPerfil, user } = useAuth();
+    const { colors } = useTheme();
     const isTeacher = user?.role === "teacher";
 
-    // campos aluno
     const [rm, setRm] = useState("");
     const [curso, setCurso] = useState("");
     const [semestre, setSemestre] = useState("");
@@ -54,7 +67,6 @@ export default function CompleteProfile() {
     const [periodo, setPeriodo] = useState("");
     const [unidade, setUnidade] = useState("");
 
-    // campos professor
     const [idProfessor, setIdProfessor] = useState("");
     const [departamento, setDepartamento] = useState("");
     const [unidadeProf, setUnidadeProf] = useState("");
@@ -121,7 +133,10 @@ export default function CompleteProfile() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <ScrollView
-                contentContainerStyle={styles.container}
+                contentContainerStyle={[
+                    styles.container,
+                    { backgroundColor: colors.bg },
+                ]}
                 keyboardShouldPersistTaps="handled"
             >
                 <Image
@@ -129,9 +144,12 @@ export default function CompleteProfile() {
                     style={styles.logo}
                     resizeMode="contain"
                 />
-
-                <Text style={styles.titulo}>Complete seu perfil</Text>
-                <Text style={styles.subtitulo}>
+                <Text style={[styles.titulo, { color: colors.text }]}>
+                    Complete seu perfil
+                </Text>
+                <Text
+                    style={[styles.subtitulo, { color: colors.textSecondary }]}
+                >
                     {isTeacher
                         ? "Dados do professor"
                         : "Dados acadêmicos do aluno"}
@@ -147,6 +165,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: PROF001"
+                            colors={colors}
                         />
                         <Campo
                             label="Departamento"
@@ -156,6 +175,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: Engenharia de Software"
+                            colors={colors}
                         />
                         <Campo
                             label="Unidade"
@@ -165,6 +185,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: FIAP Paulista"
+                            colors={colors}
                         />
                     </>
                 ) : (
@@ -178,6 +199,7 @@ export default function CompleteProfile() {
                             setErros={setErros}
                             placeholder="Ex: 556259"
                             keyboardType="numeric"
+                            colors={colors}
                         />
                         <Campo
                             label="Curso"
@@ -187,6 +209,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: Engenharia de Software"
+                            colors={colors}
                         />
                         <Campo
                             label="Semestre"
@@ -196,6 +219,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: 3º Ano"
+                            colors={colors}
                         />
                         <Campo
                             label="Turma"
@@ -205,6 +229,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: 3ESPH"
+                            colors={colors}
                         />
                         <Campo
                             label="Período"
@@ -214,6 +239,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: Matutino"
+                            colors={colors}
                         />
                         <Campo
                             label="Unidade"
@@ -223,6 +249,7 @@ export default function CompleteProfile() {
                             erros={erros}
                             setErros={setErros}
                             placeholder="Ex: FIAP Paulista"
+                            colors={colors}
                         />
                     </>
                 )}
@@ -247,35 +274,21 @@ export default function CompleteProfile() {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: "#f5f5f5",
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
     },
     logo: { width: 140, height: 60, marginBottom: 24 },
-    titulo: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 6,
-        color: "#171717",
-    },
-    subtitulo: {
-        fontSize: 14,
-        color: "#666",
-        marginBottom: 24,
-        textAlign: "center",
-    },
+    titulo: { fontSize: 24, fontWeight: "bold", marginBottom: 6 },
+    subtitulo: { fontSize: 14, marginBottom: 24, textAlign: "center" },
     campo: { width: "100%", marginBottom: 4 },
-    label: { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 6 },
+    label: { fontSize: 14, fontWeight: "600", marginBottom: 6 },
     input: {
-        backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: "#ddd",
         borderRadius: 10,
         paddingHorizontal: 14,
         paddingVertical: 12,
         fontSize: 15,
-        color: "#171717",
     },
     inputErro: { borderColor: "#e53935" },
     erroInline: {

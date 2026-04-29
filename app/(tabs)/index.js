@@ -8,21 +8,23 @@ import {
 } from "react-native";
 import Swiper from "react-native-swiper";
 import { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { classroom } from "../../data/classroom.data";
 
-const EVENTS_KEY = "@fiap_calendar_events";
+const EVENTS_KEY = "fiap_calendar_events";
 
 export default function Home() {
     const { user } = useAuth();
+    const { colors } = useTheme();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
             try {
-                const json = await AsyncStorage.getItem(EVENTS_KEY);
+                const json = await SecureStore.getItemAsync(EVENTS_KEY);
                 if (json) setEvents(JSON.parse(json));
             } catch (_) {
             } finally {
@@ -57,7 +59,6 @@ export default function Home() {
         ...classroom.slice(0, startIndex),
     ];
 
-    // Próximos eventos (ordenados por data, máx 3)
     const parseDate = (dateBR) => {
         const [d, m, y] = dateBR.split("/");
         return new Date(y, m - 1, d);
@@ -71,65 +72,63 @@ export default function Home() {
         .sort((a, b) => parseDate(a.date) - parseDate(b.date))
         .slice(0, 3);
 
+    const s = makeStyles(colors);
+
     return (
-        <ScrollView style={styles.container}>
-            <View style={styles.header}>
+        <ScrollView style={s.container}>
+            <View style={s.header}>
                 <Image
                     source={require("../../assets/FIAP.png")}
-                    style={styles.logo}
+                    style={s.logo}
                     resizeMode="contain"
                 />
-                <Text style={styles.welcome}>
-                    Bem-vindo, {user?.name ?? ""}
-                </Text>
-                <Text style={styles.subtitle}>
+                <Text style={s.welcome}>Bem-vindo, {user?.name ?? ""}</Text>
+                <Text style={s.subtitle}>
                     Confira suas aulas e próximos eventos
                 </Text>
             </View>
 
-            <View style={styles.swiperContainer}>
+            <View style={s.swiperContainer}>
                 <Swiper
                     loop={false}
                     showsPagination
-                    dotColor="#ddd"
+                    dotColor={colors.separator}
                     activeDotColor="#FF0C5C"
                 >
                     {orderedDays.map((day, i) => (
-                        <View key={i} style={styles.slide}>
-                            <View style={styles.dayHeader}>
-                                <Text style={styles.day}>{day.name}</Text>
+                        <View key={i} style={s.slide}>
+                            <View style={s.dayHeader}>
+                                <Text style={s.day}>{day.name}</Text>
                                 {i === 0 && (
-                                    <View style={styles.todayBadge}>
-                                        <Text style={styles.todayText}>
-                                            HOJE
-                                        </Text>
+                                    <View style={s.todayBadge}>
+                                        <Text style={s.todayText}>HOJE</Text>
                                     </View>
                                 )}
                             </View>
-                            <View style={styles.card}>
-                                <Text style={styles.classTitle}>1ª Aula</Text>
-                                <Text style={styles.classTextTime}>
+                            <View style={s.card}>
+                                <Text style={s.classTitle}>1ª Aula</Text>
+                                <Text style={s.classTextTime}>
                                     {day.time[0]}
                                 </Text>
-                                <View style={styles.classClassroom}>
-                                    <Text style={styles.classText}>
+                                <View style={s.classClassroom}>
+                                    <Text style={s.classText}>
                                         {day.classes[0]}
                                     </Text>
-                                    <Text style={styles.classTextClassroom}>
+                                    <Text style={s.classTextClassroom}>
                                         - {day.classroom[0]}
                                     </Text>
                                 </View>
                             </View>
-                            <View style={styles.card}>
-                                <Text style={styles.classTitle}>2ª Aula</Text>
-                                <Text style={styles.classTextTime}>
+                            <View style={s.card}>
+                                <Text style={s.classTitle}>2ª Aula</Text>
+                                <Text style={s.classTextTime}>
                                     {day.time[1]}
                                 </Text>
-                                <View style={styles.classClassroom}>
-                                    <Text style={styles.classText}>
+                                <View style={s.classClassroom}>
+                                    <Text style={s.classText}>
                                         {day.classes[1]}
                                     </Text>
-                                    <Text style={styles.classTextClassroom}>
+                                    <Text style={s.classTextClassroom}>
                                         - {day.classroom[1]}
                                     </Text>
                                 </View>
@@ -139,13 +138,11 @@ export default function Home() {
                 </Swiper>
             </View>
 
-            <View style={styles.sprintContainer}>
-                <View style={styles.sprintCard}>
-                    <View style={styles.sprintHeader}>
-                        <Text style={styles.sprintTitle}>Próximos Eventos</Text>
-                        <Text style={styles.todayDate}>
-                            {todayDateFormatted}
-                        </Text>
+            <View style={s.sprintContainer}>
+                <View style={s.sprintCard}>
+                    <View style={s.sprintHeader}>
+                        <Text style={s.sprintTitle}>Próximos Eventos</Text>
+                        <Text style={s.todayDate}>{todayDateFormatted}</Text>
                     </View>
 
                     {loading ? (
@@ -154,24 +151,20 @@ export default function Home() {
                             style={{ marginVertical: 12 }}
                         />
                     ) : upcomingEvents.length === 0 ? (
-                        <Text style={styles.emptyText}>
-                            Nenhum evento agendado.
-                        </Text>
+                        <Text style={s.emptyText}>Nenhum evento agendado.</Text>
                     ) : (
                         upcomingEvents.map((ev, i) => (
-                            <View key={i} style={styles.deliveryRow}>
-                                <View style={styles.dot} />
+                            <View key={i} style={s.deliveryRow}>
+                                <View style={s.dot} />
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.deliveryTitle}>
+                                    <Text style={s.deliveryTitle}>
                                         {ev.title}
                                     </Text>
-                                    <Text style={styles.deliverySubject}>
+                                    <Text style={s.deliverySubject}>
                                         {ev.subject}
                                     </Text>
                                 </View>
-                                <Text style={styles.deliveryDate}>
-                                    {ev.date}
-                                </Text>
+                                <Text style={s.deliveryDate}>{ev.date}</Text>
                             </View>
                         ))
                     )}
@@ -181,78 +174,103 @@ export default function Home() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f5f5f5" },
-    header: { paddingTop: 30, alignItems: "center", marginBottom: 10 },
-    logo: { width: 140, height: 60 },
-    welcome: { fontSize: 24, fontWeight: "bold", marginTop: 10 },
-    subtitle: { color: "#666", fontSize: 14 },
-    swiperContainer: { height: 350 },
-    slide: { alignItems: "center", padding: 20 },
-    dayHeader: { flexDirection: "row", alignItems: "center", marginBottom: 15 },
-    day: { fontSize: 22, fontWeight: "bold", marginRight: 10 },
-    todayBadge: {
-        backgroundColor: "#FF0C5C",
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 6,
-    },
-    todayText: { color: "#fff", fontSize: 10, fontWeight: "bold" },
-    card: {
-        width: "100%",
-        height: 100,
-        justifyContent: "center",
-        backgroundColor: "#fff",
-        paddingHorizontal: 15,
-        borderRadius: 14,
-        marginBottom: 12,
-        elevation: 3,
-    },
-    classTitle: { fontWeight: "bold", marginBottom: 5, color: "#FF0C5C" },
-    classClassroom: { flexDirection: "row", gap: 10, alignItems: "center" },
-    classTextTime: {
-        color: "#171717",
-        fontSize: 16,
-        paddingBottom: 4,
-        fontWeight: "bold",
-    },
-    classTextClassroom: { fontSize: 12, color: "#FF0C5C" },
-    classText: { color: "#444" },
-    sprintContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        marginBottom: 24,
-    },
-    sprintCard: {
-        width: "90%",
-        backgroundColor: "#fff",
-        padding: 15,
-        borderRadius: 14,
-        elevation: 3,
-    },
-    sprintHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-    todayDate: { fontSize: 14, color: "#171717" },
-    sprintTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 4 },
-    emptyText: { color: "#999", textAlign: "center", paddingVertical: 12 },
-    deliveryRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 8,
-        paddingVertical: 6,
-    },
-    deliveryTitle: { fontWeight: "bold", fontSize: 13 },
-    deliverySubject: { fontSize: 12, color: "#666" },
-    deliveryDate: { fontSize: 12, color: "#FF0C5C", fontWeight: "bold" },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: "#FF0C5C",
-        marginRight: 8,
-    },
-});
+function makeStyles(c) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: c.bg },
+        header: { paddingTop: 30, alignItems: "center", marginBottom: 10 },
+        logo: { width: 140, height: 60 },
+        welcome: {
+            fontSize: 24,
+            fontWeight: "bold",
+            marginTop: 10,
+            color: c.text,
+        },
+        subtitle: { color: c.textSecondary, fontSize: 14 },
+        swiperContainer: { height: 350 },
+        slide: { alignItems: "center", padding: 20 },
+        dayHeader: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 15,
+        },
+        day: {
+            fontSize: 22,
+            fontWeight: "bold",
+            marginRight: 10,
+            color: c.text,
+        },
+        todayBadge: {
+            backgroundColor: "#FF0C5C",
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 6,
+        },
+        todayText: { color: "#fff", fontSize: 10, fontWeight: "bold" },
+        card: {
+            width: "100%",
+            height: 100,
+            justifyContent: "center",
+            backgroundColor: c.card,
+            paddingHorizontal: 15,
+            borderRadius: 14,
+            marginBottom: 12,
+            elevation: 3,
+        },
+        classTitle: { fontWeight: "bold", marginBottom: 5, color: "#FF0C5C" },
+        classClassroom: { flexDirection: "row", gap: 10, alignItems: "center" },
+        classTextTime: {
+            color: c.text,
+            fontSize: 16,
+            paddingBottom: 4,
+            fontWeight: "bold",
+        },
+        classTextClassroom: { fontSize: 12, color: "#FF0C5C" },
+        classText: { color: c.textSecondary },
+        sprintContainer: {
+            flexDirection: "row",
+            justifyContent: "center",
+            marginBottom: 24,
+        },
+        sprintCard: {
+            width: "90%",
+            backgroundColor: c.card,
+            padding: 15,
+            borderRadius: 14,
+            elevation: 3,
+        },
+        sprintHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+        },
+        todayDate: { fontSize: 14, color: c.text },
+        sprintTitle: {
+            fontSize: 16,
+            fontWeight: "bold",
+            marginBottom: 4,
+            color: c.text,
+        },
+        emptyText: {
+            color: c.textMuted,
+            textAlign: "center",
+            paddingVertical: 12,
+        },
+        deliveryRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: 8,
+            paddingVertical: 6,
+        },
+        deliveryTitle: { fontWeight: "bold", fontSize: 13, color: c.text },
+        deliverySubject: { fontSize: 12, color: c.textSecondary },
+        deliveryDate: { fontSize: 12, color: "#FF0C5C", fontWeight: "bold" },
+        dot: {
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: "#FF0C5C",
+            marginRight: 8,
+        },
+    });
+}

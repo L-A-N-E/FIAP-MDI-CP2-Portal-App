@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AuthContext = createContext(null);
 
-const SESSION_KEY = '@fiap_session';
-const USERS_KEY = '@fiap_users';
+const SESSION_KEY = "@fiap_session";
+const USERS_KEY = "@fiap_users";
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
                     setUser(JSON.parse(json));
                 }
             } catch (e) {
-                console.warn('Erro ao carregar sessão:', e);
+                console.warn("Erro ao carregar sessão:", e);
             } finally {
                 setIsLoading(false);
             }
@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     async function getAllUsers() {
-        const { mockUsers } = await import('../data/users.data');
+        const { mockUsers } = await import("../data/users.data");
         let appUsers = [];
         try {
             const json = await AsyncStorage.getItem(USERS_KEY);
@@ -37,15 +37,20 @@ export function AuthProvider({ children }) {
         return [...mockUsers, ...appUsers];
     }
 
+    async function getAllStudents() {
+        const users = await getAllUsers();
+        return users.filter((u) => u.role === "student");
+    }
+
     async function login(email, senha) {
         const users = await getAllUsers();
         const found = users.find(
             (u) =>
                 u.email.toLowerCase() === email.toLowerCase() &&
-                u.senha === senha
+                u.senha === senha,
         );
         if (!found) {
-            throw new Error('E-mail ou senha incorretos.');
+            throw new Error("E-mail ou senha incorretos.");
         }
         const { senha: _, ...safeUser } = found;
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
@@ -55,10 +60,10 @@ export function AuthProvider({ children }) {
     async function cadastrar(dados) {
         const users = await getAllUsers();
         const existe = users.find(
-            (u) => u.email.toLowerCase() === dados.email.toLowerCase()
+            (u) => u.email.toLowerCase() === dados.email.toLowerCase(),
         );
         if (existe) {
-            throw new Error('Este e-mail já está cadastrado.');
+            throw new Error("Este e-mail já está cadastrado.");
         }
 
         let appUsers = [];
@@ -86,11 +91,16 @@ export function AuthProvider({ children }) {
             if (json) {
                 const appUsers = JSON.parse(json);
                 const idx = appUsers.findIndex(
-                    (u) => u.email.toLowerCase() === updatedUser.email.toLowerCase()
+                    (u) =>
+                        u.email.toLowerCase() ===
+                        updatedUser.email.toLowerCase(),
                 );
                 if (idx !== -1) {
                     appUsers[idx] = { ...appUsers[idx], ...dadosAcademicos };
-                    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(appUsers));
+                    await AsyncStorage.setItem(
+                        USERS_KEY,
+                        JSON.stringify(appUsers),
+                    );
                 }
             }
         } catch (_) {}
@@ -103,7 +113,7 @@ export function AuthProvider({ children }) {
         try {
             await AsyncStorage.removeItem(SESSION_KEY);
         } catch (e) {
-            console.warn('Erro ao fazer logout:', e);
+            console.warn("Erro ao fazer logout:", e);
         }
         setUser(null);
         setNeedsProfileCompletion(false);
@@ -119,6 +129,7 @@ export function AuthProvider({ children }) {
                 cadastrar,
                 completarPerfil,
                 logout,
+                getAllStudents,
             }}
         >
             {children}
@@ -128,6 +139,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth deve ser usado dentro de <AuthProvider>');
+    if (!ctx)
+        throw new Error("useAuth deve ser usado dentro de <AuthProvider>");
     return ctx;
 }

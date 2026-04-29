@@ -12,21 +12,22 @@ import {
     Alert,
 } from "react-native";
 import { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 
-const EVENTS_KEY = "@fiap_calendar_events";
+const EVENTS_KEY = "fiap_calendar_events";
 
 export default function CalendarScreen() {
     const { user } = useAuth();
+    const { colors } = useTheme();
     const isTeacher = user?.role === "teacher";
 
     const [selected, setSelected] = useState("");
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // modal de novo evento
     const [modal, setModal] = useState(false);
     const [titulo, setTitulo] = useState("");
     const [materia, setMateria] = useState("");
@@ -36,7 +37,7 @@ export default function CalendarScreen() {
     useEffect(() => {
         async function load() {
             try {
-                const json = await AsyncStorage.getItem(EVENTS_KEY);
+                const json = await SecureStore.getItemAsync(EVENTS_KEY);
                 if (json) setEvents(JSON.parse(json));
             } catch (_) {
             } finally {
@@ -74,11 +75,14 @@ export default function CalendarScreen() {
                 id: `${Date.now()}-${Math.random()}`,
                 title: titulo.trim(),
                 subject: materia.trim(),
-                date: selected.split("-").reverse().join("/"), // yyyy-mm-dd → dd/mm/yyyy
+                date: selected.split("-").reverse().join("/"),
                 addedBy: user?.email,
             };
             const novosEvents = [...events, novoEvento];
-            await AsyncStorage.setItem(EVENTS_KEY, JSON.stringify(novosEvents));
+            await SecureStore.setItemAsync(
+                EVENTS_KEY,
+                JSON.stringify(novosEvents),
+            );
             setEvents(novosEvents);
             setTitulo("");
             setMateria("");
@@ -92,9 +96,11 @@ export default function CalendarScreen() {
 
     async function removerEvento(id) {
         const novosEvents = events.filter((ev) => ev.id !== id);
-        await AsyncStorage.setItem(EVENTS_KEY, JSON.stringify(novosEvents));
+        await SecureStore.setItemAsync(EVENTS_KEY, JSON.stringify(novosEvents));
         setEvents(novosEvents);
     }
+
+    const s = makeStyles(colors);
 
     if (loading) {
         return (
@@ -103,6 +109,7 @@ export default function CalendarScreen() {
                     flex: 1,
                     justifyContent: "center",
                     alignItems: "center",
+                    backgroundColor: colors.bg,
                 }}
             >
                 <ActivityIndicator size="large" color="#FF0C5C" />
@@ -111,18 +118,18 @@ export default function CalendarScreen() {
     }
 
     return (
-        <ScrollView style={styles.container}>
-            <View style={styles.header}>
+        <ScrollView style={s.container}>
+            <View style={s.header}>
                 <Image
                     source={require("../../assets/FIAP.png")}
-                    style={styles.logo}
+                    style={s.logo}
                     resizeMode="contain"
                 />
-                <Text style={styles.title}>Calendário Acadêmico</Text>
+                <Text style={s.title}>Calendário Acadêmico</Text>
             </View>
 
-            <View style={styles.calendarContainer}>
-                <View style={styles.calendarStyle}>
+            <View style={s.calendarContainer}>
+                <View style={s.calendarStyle}>
                     <Calendar
                         onDayPress={(day) => setSelected(day.dateString)}
                         markedDates={{
@@ -138,49 +145,52 @@ export default function CalendarScreen() {
                             arrowColor: "#FF0C5C",
                             selectedDayBackgroundColor: "#FF0C5C",
                             dotColor: "#FF0C5C",
+                            backgroundColor: colors.card,
+                            calendarBackground: colors.card,
+                            textSectionTitleColor: colors.textSecondary,
+                            dayTextColor: colors.text,
+                            textDisabledColor: colors.textMuted,
+                            monthTextColor: colors.text,
                         }}
                     />
                 </View>
             </View>
 
-            {/* Botão de adicionar evento (professor) */}
             {isTeacher && selected !== "" && (
-                <View style={styles.addContainer}>
+                <View style={s.addContainer}>
                     <TouchableOpacity
-                        style={styles.addBtn}
+                        style={s.addBtn}
                         onPress={() => setModal(true)}
                         activeOpacity={0.8}
                     >
                         <Ionicons name="add" size={20} color="#fff" />
-                        <Text style={styles.addBtnText}>Adicionar evento</Text>
+                        <Text style={s.addBtnText}>Adicionar evento</Text>
                     </TouchableOpacity>
                 </View>
             )}
 
-            {/* Eventos do dia */}
             {selected !== "" && (
-                <View style={styles.eventContainer}>
-                    <View style={styles.eventCard}>
-                        <Text style={styles.eventTitle}>
+                <View style={s.eventContainer}>
+                    <View style={s.eventCard}>
+                        <Text style={s.eventTitle}>
                             Eventos — {selected.split("-").reverse().join("/")}
                         </Text>
 
                         {eventsToday.length === 0 ? (
-                            <Text style={styles.eventMessage}>
+                            <Text style={s.eventMessage}>
                                 Nenhum evento nesta data.
                             </Text>
                         ) : (
                             eventsToday.map((ev) => (
-                                <View key={ev.id} style={styles.eventRow}>
+                                <View key={ev.id} style={s.eventRow}>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={styles.eventNome}>
+                                        <Text style={s.eventNome}>
                                             {ev.title}
                                         </Text>
-                                        <Text style={styles.eventMateria}>
+                                        <Text style={s.eventMateria}>
                                             {ev.subject}
                                         </Text>
                                     </View>
-                                    {/* Professor pode remover seus próprios eventos */}
                                     {isTeacher &&
                                         ev.addedBy === user?.email && (
                                             <TouchableOpacity
@@ -208,67 +218,64 @@ export default function CalendarScreen() {
                 </View>
             )}
 
-            {/* Modal novo evento */}
             <Modal visible={modal} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modal}>
-                        <Text style={styles.modalTitle}>
+                <View style={s.modalOverlay}>
+                    <View style={s.modal}>
+                        <Text style={s.modalTitle}>
                             Novo evento —{" "}
                             {selected.split("-").reverse().join("/")}
                         </Text>
 
-                        <Text style={styles.modalLabel}>Título</Text>
+                        <Text style={s.modalLabel}>Título</Text>
                         <TextInput
                             style={[
-                                styles.modalInput,
-                                erros.titulo && styles.modalInputErro,
+                                s.modalInput,
+                                erros.titulo && s.modalInputErro,
                             ]}
                             placeholder="Ex: Checkpoint 1"
+                            placeholderTextColor={colors.textMuted}
                             value={titulo}
                             onChangeText={(v) => {
                                 setTitulo(v);
                                 setErros((p) => ({ ...p, titulo: undefined }));
                             }}
                         />
-                        <Text style={styles.erroInline}>
-                            {erros.titulo ?? " "}
-                        </Text>
+                        <Text style={s.erroInline}>{erros.titulo ?? " "}</Text>
 
-                        <Text style={styles.modalLabel}>Matéria</Text>
+                        <Text style={s.modalLabel}>Matéria</Text>
                         <TextInput
                             style={[
-                                styles.modalInput,
-                                erros.materia && styles.modalInputErro,
+                                s.modalInput,
+                                erros.materia && s.modalInputErro,
                             ]}
                             placeholder="Ex: Mobile Development & IoT"
+                            placeholderTextColor={colors.textMuted}
                             value={materia}
                             onChangeText={(v) => {
                                 setMateria(v);
                                 setErros((p) => ({ ...p, materia: undefined }));
                             }}
                         />
-                        <Text style={styles.erroInline}>
-                            {erros.materia ?? " "}
-                        </Text>
+                        <Text style={s.erroInline}>{erros.materia ?? " "}</Text>
 
-                        <View style={styles.modalBtns}>
+                        <View style={s.modalBtns}>
                             <TouchableOpacity
-                                style={styles.modalBtnCancel}
+                                style={s.modalBtnCancel}
                                 onPress={() => setModal(false)}
                             >
-                                <Text style={styles.modalBtnCancelText}>
+                                <Text style={s.modalBtnCancelText}>
                                     Cancelar
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={styles.modalBtnSave}
+                                style={s.modalBtnSave}
                                 onPress={salvarEvento}
                                 disabled={saving}
                             >
                                 {saving ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.modalBtnSaveText}>
+                                    <Text style={s.modalBtnSaveText}>
                                         Salvar
                                     </Text>
                                 )}
@@ -281,118 +288,129 @@ export default function CalendarScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f5f5f5" },
-    header: { paddingTop: 30, alignItems: "center", marginBottom: 10 },
-    logo: { width: 140, height: 60 },
-    title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        textAlign: "center",
-        marginBottom: 8,
-    },
-    calendarContainer: { flexDirection: "row", justifyContent: "center" },
-    calendarStyle: {
-        padding: 20,
-        borderRadius: 20,
-        width: "90%",
-        backgroundColor: "#fff",
-    },
-    addContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        marginTop: 12,
-    },
-    addBtn: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-        backgroundColor: "#FF0C5C",
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 10,
-    },
-    addBtnText: { color: "#fff", fontWeight: "bold" },
-    eventContainer: {
-        marginTop: 16,
-        flexDirection: "row",
-        justifyContent: "center",
-        paddingBottom: 24,
-    },
-    eventCard: {
-        width: "90%",
-        padding: 20,
-        borderRadius: 14,
-        backgroundColor: "#fff",
-        elevation: 3,
-    },
-    eventTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 12,
-        textAlign: "center",
-    },
-    eventRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: "#f0f0f0",
-    },
-    eventNome: { fontSize: 14, fontWeight: "bold", color: "#171717" },
-    eventMateria: { fontSize: 12, color: "#666", marginTop: 2 },
-    eventMessage: { textAlign: "center", color: "#666" },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.4)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 24,
-    },
-    modal: {
-        width: "100%",
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 16,
-        color: "#171717",
-    },
-    modalLabel: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#333",
-        marginBottom: 6,
-    },
-    modalInput: {
-        borderWidth: 1,
-        borderColor: "#ddd",
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        fontSize: 15,
-    },
-    modalInputErro: { borderColor: "#e53935" },
-    erroInline: { color: "#e53935", fontSize: 12, marginTop: 4, minHeight: 18 },
-    modalBtns: { flexDirection: "row", gap: 12, marginTop: 8 },
-    modalBtnCancel: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: "#ddd",
-        alignItems: "center",
-    },
-    modalBtnCancelText: { fontWeight: "bold", color: "#666" },
-    modalBtnSave: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 10,
-        backgroundColor: "#FF0C5C",
-        alignItems: "center",
-    },
-    modalBtnSaveText: { fontWeight: "bold", color: "#fff" },
-});
+function makeStyles(c) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: c.bg },
+        header: { paddingTop: 30, alignItems: "center", marginBottom: 10 },
+        logo: { width: 140, height: 60 },
+        title: {
+            fontSize: 24,
+            fontWeight: "bold",
+            textAlign: "center",
+            marginBottom: 8,
+            color: c.text,
+        },
+        calendarContainer: { flexDirection: "row", justifyContent: "center" },
+        calendarStyle: {
+            padding: 20,
+            borderRadius: 20,
+            width: "90%",
+            backgroundColor: c.card,
+        },
+        addContainer: {
+            flexDirection: "row",
+            justifyContent: "center",
+            marginTop: 12,
+        },
+        addBtn: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            backgroundColor: "#FF0C5C",
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 10,
+        },
+        addBtnText: { color: "#fff", fontWeight: "bold" },
+        eventContainer: {
+            marginTop: 16,
+            flexDirection: "row",
+            justifyContent: "center",
+            paddingBottom: 24,
+        },
+        eventCard: {
+            width: "90%",
+            padding: 20,
+            borderRadius: 14,
+            backgroundColor: c.card,
+            elevation: 3,
+        },
+        eventTitle: {
+            fontSize: 16,
+            fontWeight: "bold",
+            marginBottom: 12,
+            textAlign: "center",
+            color: c.text,
+        },
+        eventRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: c.separator,
+        },
+        eventNome: { fontSize: 14, fontWeight: "bold", color: c.text },
+        eventMateria: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+        eventMessage: { textAlign: "center", color: c.textSecondary },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: c.overlay,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+        },
+        modal: {
+            width: "100%",
+            backgroundColor: c.card,
+            borderRadius: 16,
+            padding: 20,
+        },
+        modalTitle: {
+            fontSize: 16,
+            fontWeight: "bold",
+            marginBottom: 16,
+            color: c.text,
+        },
+        modalLabel: {
+            fontSize: 14,
+            fontWeight: "600",
+            color: c.text,
+            marginBottom: 6,
+        },
+        modalInput: {
+            borderWidth: 1,
+            borderColor: c.inputBorder,
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            fontSize: 15,
+            backgroundColor: c.inputBg,
+            color: c.text,
+        },
+        modalInputErro: { borderColor: "#e53935" },
+        erroInline: {
+            color: "#e53935",
+            fontSize: 12,
+            marginTop: 4,
+            minHeight: 18,
+        },
+        modalBtns: { flexDirection: "row", gap: 12, marginTop: 8 },
+        modalBtnCancel: {
+            flex: 1,
+            paddingVertical: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: c.inputBorder,
+            alignItems: "center",
+        },
+        modalBtnCancelText: { fontWeight: "bold", color: c.textSecondary },
+        modalBtnSave: {
+            flex: 1,
+            paddingVertical: 12,
+            borderRadius: 10,
+            backgroundColor: "#FF0C5C",
+            alignItems: "center",
+        },
+        modalBtnSaveText: { fontWeight: "bold", color: "#fff" },
+    });
+}

@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 
 function CampoInput({
@@ -26,21 +27,30 @@ function CampoInput({
     erros,
     setErros,
     setErroGeral,
+    colors,
 }) {
     const [mostrarSenha, setMostrarSenha] = useState(false);
     const ehSenha = secure === true;
 
     return (
         <View style={styles.campo}>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
             <View style={styles.inputWrapper}>
                 <TextInput
                     style={[
                         styles.input,
                         ehSenha && styles.inputComIcone,
                         erros[chave] && styles.inputErro,
+                        {
+                            backgroundColor: colors.inputBg,
+                            borderColor: erros[chave]
+                                ? "#e53935"
+                                : colors.inputBorder,
+                            color: colors.text,
+                        },
                     ]}
                     placeholder={placeholder}
+                    placeholderTextColor={colors.textMuted}
                     secureTextEntry={ehSenha && !mostrarSenha}
                     keyboardType={keyboard ?? "default"}
                     autoCapitalize={
@@ -64,7 +74,7 @@ function CampoInput({
                                 mostrarSenha ? "eye-outline" : "eye-off-outline"
                             }
                             size={20}
-                            color="#999"
+                            color={colors.textMuted}
                         />
                     </TouchableOpacity>
                 )}
@@ -77,8 +87,9 @@ function CampoInput({
 export default function Register() {
     const router = useRouter();
     const { cadastrar } = useAuth();
+    const { colors } = useTheme();
 
-    const [papel, setPapel] = useState("student"); // 'student' | 'teacher'
+    const [papel, setPapel] = useState("student");
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
@@ -113,7 +124,6 @@ export default function Register() {
         const novosErros = validar();
         setErros(novosErros);
         if (Object.keys(novosErros).length > 0) return;
-
         setLoading(true);
         try {
             await cadastrar({
@@ -122,7 +132,6 @@ export default function Register() {
                 email: email.trim(),
                 senha,
                 role: papel,
-                // campos completados na próxima tela
                 rm: "",
                 id: "",
                 course: "",
@@ -146,7 +155,10 @@ export default function Register() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <ScrollView
-                contentContainerStyle={styles.container}
+                contentContainerStyle={[
+                    styles.container,
+                    { backgroundColor: colors.bg },
+                ]}
                 keyboardShouldPersistTaps="handled"
             >
                 <Image
@@ -154,58 +166,60 @@ export default function Register() {
                     style={styles.logo}
                     resizeMode="contain"
                 />
-
-                <Text style={styles.titulo}>Criar conta</Text>
-                <Text style={styles.subtitulo}>
+                <Text style={[styles.titulo, { color: colors.text }]}>
+                    Criar conta
+                </Text>
+                <Text
+                    style={[styles.subtitulo, { color: colors.textSecondary }]}
+                >
                     Preencha os campos abaixo para se cadastrar
                 </Text>
 
-                {/* Seletor de papel */}
-                <View style={styles.papelContainer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.papelBotao,
-                            papel === "student" && styles.papelBotaoAtivo,
-                        ]}
-                        onPress={() => setPapel("student")}
-                        activeOpacity={0.8}
-                    >
-                        <Ionicons
-                            name="school-outline"
-                            size={16}
-                            color={papel === "student" ? "#fff" : "#666"}
-                        />
-                        <Text
+                <View
+                    style={[
+                        styles.papelContainer,
+                        {
+                            backgroundColor: colors.card,
+                            borderColor: colors.cardBorder,
+                        },
+                    ]}
+                >
+                    {["student", "teacher"].map((p) => (
+                        <TouchableOpacity
+                            key={p}
                             style={[
-                                styles.papelTexto,
-                                papel === "student" && styles.papelTextoAtivo,
+                                styles.papelBotao,
+                                papel === p && styles.papelBotaoAtivo,
                             ]}
+                            onPress={() => setPapel(p)}
+                            activeOpacity={0.8}
                         >
-                            Aluno
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.papelBotao,
-                            papel === "teacher" && styles.papelBotaoAtivo,
-                        ]}
-                        onPress={() => setPapel("teacher")}
-                        activeOpacity={0.8}
-                    >
-                        <Ionicons
-                            name="person-outline"
-                            size={16}
-                            color={papel === "teacher" ? "#fff" : "#666"}
-                        />
-                        <Text
-                            style={[
-                                styles.papelTexto,
-                                papel === "teacher" && styles.papelTextoAtivo,
-                            ]}
-                        >
-                            Professor
-                        </Text>
-                    </TouchableOpacity>
+                            <Ionicons
+                                name={
+                                    p === "student"
+                                        ? "school-outline"
+                                        : "person-outline"
+                                }
+                                size={16}
+                                color={
+                                    papel === p ? "#fff" : colors.textSecondary
+                                }
+                            />
+                            <Text
+                                style={[
+                                    styles.papelTexto,
+                                    {
+                                        color:
+                                            papel === p
+                                                ? "#fff"
+                                                : colors.textSecondary,
+                                    },
+                                ]}
+                            >
+                                {p === "student" ? "Aluno" : "Professor"}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
                 <CampoInput
@@ -216,6 +230,7 @@ export default function Register() {
                     placeholder="Seu nome completo"
                     erros={erros}
                     setErros={setErros}
+                    colors={colors}
                 />
                 <CampoInput
                     label="E-mail"
@@ -227,6 +242,7 @@ export default function Register() {
                     erros={erros}
                     setErros={setErros}
                     setErroGeral={setErroGeral}
+                    colors={colors}
                 />
                 <CampoInput
                     label="Senha"
@@ -237,6 +253,7 @@ export default function Register() {
                     secure
                     erros={erros}
                     setErros={setErros}
+                    colors={colors}
                 />
                 <CampoInput
                     label="Confirmar senha"
@@ -247,6 +264,7 @@ export default function Register() {
                     secure
                     erros={erros}
                     setErros={setErros}
+                    colors={colors}
                 />
 
                 <Text
@@ -275,7 +293,12 @@ export default function Register() {
                     onPress={() => router.back()}
                     style={styles.linkContainer}
                 >
-                    <Text style={styles.linkTexto}>
+                    <Text
+                        style={[
+                            styles.linkTexto,
+                            { color: colors.textSecondary },
+                        ]}
+                    >
                         Já tem conta?{" "}
                         <Text style={styles.linkDestaque}>Entrar</Text>
                     </Text>
@@ -288,33 +311,20 @@ export default function Register() {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        backgroundColor: "#f5f5f5",
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
     },
     logo: { width: 140, height: 60, marginBottom: 24 },
-    titulo: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 6,
-        color: "#171717",
-    },
-    subtitulo: {
-        fontSize: 14,
-        color: "#666",
-        marginBottom: 20,
-        textAlign: "center",
-    },
+    titulo: { fontSize: 24, fontWeight: "bold", marginBottom: 6 },
+    subtitulo: { fontSize: 14, marginBottom: 20, textAlign: "center" },
     papelContainer: {
         flexDirection: "row",
         width: "100%",
-        backgroundColor: "#fff",
         borderRadius: 12,
         padding: 4,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: "#eee",
     },
     papelBotao: {
         flex: 1,
@@ -326,20 +336,16 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     papelBotaoAtivo: { backgroundColor: "#FF0C5C" },
-    papelTexto: { fontSize: 14, fontWeight: "600", color: "#666" },
-    papelTextoAtivo: { color: "#fff" },
+    papelTexto: { fontSize: 14, fontWeight: "600" },
     campo: { width: "100%", marginBottom: 4 },
-    label: { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 6 },
+    label: { fontSize: 14, fontWeight: "600", marginBottom: 6 },
     inputWrapper: { position: "relative", justifyContent: "center" },
     input: {
-        backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: "#ddd",
         borderRadius: 10,
         paddingHorizontal: 14,
         paddingVertical: 12,
         fontSize: 15,
-        color: "#171717",
     },
     inputComIcone: { paddingRight: 44 },
     inputErro: { borderColor: "#e53935" },
@@ -361,6 +367,6 @@ const styles = StyleSheet.create({
     },
     botaoTexto: { color: "#fff", fontSize: 16, fontWeight: "bold" },
     linkContainer: { marginTop: 20 },
-    linkTexto: { fontSize: 14, color: "#666" },
+    linkTexto: { fontSize: 14 },
     linkDestaque: { color: "#FF0C5C", fontWeight: "bold" },
 });

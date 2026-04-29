@@ -13,10 +13,12 @@ import {
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function Login() {
     const router = useRouter();
     const { login } = useAuth();
+    const { colors } = useTheme();
 
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
@@ -44,11 +46,9 @@ export default function Login() {
         const novosErros = validar();
         setErros(novosErros);
         if (Object.keys(novosErros).length > 0) return;
-
         setLoading(true);
         try {
             await login(email.trim(), senha);
-            // AuthContext + _layout raiz cuidam do redirecionamento
         } catch (e) {
             setErroGeral(e.message);
         } finally {
@@ -57,6 +57,7 @@ export default function Login() {
     }
 
     const temErros = Object.keys(validar()).length > 0;
+    const s = makeStyles(colors);
 
     return (
         <KeyboardAvoidingView
@@ -64,67 +65,64 @@ export default function Login() {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
             <ScrollView
-                contentContainerStyle={styles.container}
+                contentContainerStyle={s.container}
                 keyboardShouldPersistTaps="handled"
             >
                 <Image
                     source={require("../../assets/FIAP.png")}
-                    style={styles.logo}
+                    style={s.logo}
                     resizeMode="contain"
                 />
-
-                <Text style={styles.titulo}>Entrar na conta</Text>
-                <Text style={styles.subtitulo}>
+                <Text style={s.titulo}>Entrar na conta</Text>
+                <Text style={s.subtitulo}>
                     Use seu e-mail institucional da FIAP
                 </Text>
 
-                {/* Campo E-mail */}
-                <View style={styles.campo}>
-                    <Text style={styles.label}>E-mail</Text>
+                <View style={s.campo}>
+                    <Text style={s.label}>E-mail</Text>
                     <TextInput
-                        style={[styles.input, erros.email && styles.inputErro]}
+                        style={[s.input, erros.email && s.inputErro]}
                         placeholder="rm000000@fiap.com.br"
+                        placeholderTextColor={colors.textMuted}
                         keyboardType="email-address"
                         autoCapitalize="none"
                         value={email}
                         onChangeText={(v) => {
                             setEmail(v);
-                            setErros((prev) => ({ ...prev, email: undefined }));
+                            setErros((p) => ({ ...p, email: undefined }));
                             setErroGeral("");
                         }}
                     />
                     {erros.email && (
-                        <Text style={styles.erroInline}>{erros.email}</Text>
+                        <Text style={s.erroInline}>{erros.email}</Text>
                     )}
                 </View>
 
-                {/* Campo Senha */}
-                <View style={styles.campo}>
-                    <Text style={styles.label}>Senha</Text>
+                <View style={s.campo}>
+                    <Text style={s.label}>Senha</Text>
                     <TextInput
-                        style={[styles.input, erros.senha && styles.inputErro]}
+                        style={[s.input, erros.senha && s.inputErro]}
                         placeholder="Mínimo 6 caracteres"
+                        placeholderTextColor={colors.textMuted}
                         secureTextEntry
                         value={senha}
                         onChangeText={(v) => {
                             setSenha(v);
-                            setErros((prev) => ({ ...prev, senha: undefined }));
+                            setErros((p) => ({ ...p, senha: undefined }));
                             setErroGeral("");
                         }}
                     />
                     {erros.senha && (
-                        <Text style={styles.erroInline}>{erros.senha}</Text>
+                        <Text style={s.erroInline}>{erros.senha}</Text>
                     )}
                 </View>
 
-                {/* Erro geral (credenciais inválidas) */}
                 {erroGeral ? (
-                    <Text style={styles.erroGeral}>{erroGeral}</Text>
+                    <Text style={s.erroGeral}>{erroGeral}</Text>
                 ) : null}
 
-                {/* Botão Entrar */}
                 <TouchableOpacity
-                    style={[styles.botao, temErros && styles.botaoDesabilitado]}
+                    style={[s.botao, temErros && s.botaoDesabilitado]}
                     onPress={handleLogin}
                     disabled={temErros || loading}
                     activeOpacity={0.8}
@@ -132,18 +130,17 @@ export default function Login() {
                     {loading ? (
                         <ActivityIndicator color="#fff" />
                     ) : (
-                        <Text style={styles.botaoTexto}>Entrar</Text>
+                        <Text style={s.botaoTexto}>Entrar</Text>
                     )}
                 </TouchableOpacity>
 
-                {/* Link para cadastro */}
                 <TouchableOpacity
                     onPress={() => router.push("/(auth)/register")}
-                    style={styles.linkContainer}
+                    style={s.linkContainer}
                 >
-                    <Text style={styles.linkTexto}>
+                    <Text style={s.linkTexto}>
                         Não tem conta?{" "}
-                        <Text style={styles.linkDestaque}>Cadastre-se</Text>
+                        <Text style={s.linkDestaque}>Cadastre-se</Text>
                     </Text>
                 </TouchableOpacity>
             </ScrollView>
@@ -151,91 +148,70 @@ export default function Login() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flexGrow: 1,
-        backgroundColor: "#f5f5f5",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-    },
-    logo: {
-        width: 140,
-        height: 60,
-        marginBottom: 24,
-    },
-    titulo: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 6,
-        color: "#171717",
-    },
-    subtitulo: {
-        fontSize: 14,
-        color: "#666",
-        marginBottom: 32,
-        textAlign: "center",
-    },
-    campo: {
-        width: "100%",
-        marginBottom: 16,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#333",
-        marginBottom: 6,
-    },
-    input: {
-        backgroundColor: "#fff",
-        borderWidth: 1,
-        borderColor: "#ddd",
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        fontSize: 15,
-        color: "#171717",
-    },
-    inputErro: {
-        borderColor: "#e53935",
-    },
-    erroInline: {
-        color: "#e53935",
-        fontSize: 12,
-        marginTop: 4,
-        marginLeft: 2,
-    },
-    erroGeral: {
-        color: "#e53935",
-        fontSize: 13,
-        marginBottom: 12,
-        textAlign: "center",
-    },
-    botao: {
-        width: "100%",
-        backgroundColor: "#FF0C5C",
-        paddingVertical: 14,
-        borderRadius: 10,
-        alignItems: "center",
-        marginTop: 8,
-    },
-    botaoDesabilitado: {
-        opacity: 0.5,
-    },
-    botaoTexto: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    linkContainer: {
-        marginTop: 20,
-    },
-    linkTexto: {
-        fontSize: 14,
-        color: "#666",
-    },
-    linkDestaque: {
-        color: "#FF0C5C",
-        fontWeight: "bold",
-    },
-});
+function makeStyles(c) {
+    return StyleSheet.create({
+        container: {
+            flexGrow: 1,
+            backgroundColor: c.bg,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+        },
+        logo: { width: 140, height: 60, marginBottom: 24 },
+        titulo: {
+            fontSize: 24,
+            fontWeight: "bold",
+            marginBottom: 6,
+            color: c.text,
+        },
+        subtitulo: {
+            fontSize: 14,
+            color: c.textSecondary,
+            marginBottom: 32,
+            textAlign: "center",
+        },
+        campo: { width: "100%", marginBottom: 16 },
+        label: {
+            fontSize: 14,
+            fontWeight: "600",
+            color: c.text,
+            marginBottom: 6,
+        },
+        input: {
+            backgroundColor: c.inputBg,
+            borderWidth: 1,
+            borderColor: c.inputBorder,
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            fontSize: 15,
+            color: c.text,
+        },
+        inputErro: { borderColor: "#e53935" },
+        erroInline: {
+            color: "#e53935",
+            fontSize: 12,
+            marginTop: 4,
+            marginLeft: 2,
+        },
+        erroGeral: {
+            color: "#e53935",
+            fontSize: 13,
+            marginBottom: 12,
+            textAlign: "center",
+        },
+        botao: {
+            width: "100%",
+            backgroundColor: "#FF0C5C",
+            paddingVertical: 14,
+            borderRadius: 10,
+            alignItems: "center",
+            marginTop: 8,
+        },
+        botaoDesabilitado: { opacity: 0.5 },
+        botaoTexto: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+        linkContainer: { marginTop: 20 },
+        linkTexto: { fontSize: 14, color: c.textSecondary },
+        linkDestaque: { color: "#FF0C5C", fontWeight: "bold" },
+    });
+}

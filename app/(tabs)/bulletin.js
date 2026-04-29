@@ -8,12 +8,12 @@ import {
     Modal,
     TextInput,
     ActivityIndicator,
+    FlatList,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
-
-const BULLETIN_KEY = "@fiap_bulletin";
 
 // Matérias fixas
 const SUBJECTS = [
@@ -38,12 +38,48 @@ const DEFAULT_GRADES = {
     pr: "100",
 };
 
+const FIELD_LABELS = {
+    cp1: "CP 1º Sem",
+    gs1: "GS 1º Sem",
+    fa1: "FA 1º Sem",
+    cp2: "CP 2º Sem",
+    gs2: "GS 2º Sem",
+    fa2: "FA 2º Sem",
+    aulas: "Aulas",
+    pr: "Presença (%)",
+};
+
+// Chave de boletim isolada por aluno
+function bulletinKey(email) {
+    const safe = (email ?? "guest").replace(/[^a-zA-Z0-9_.]/g, "_");
+    return `fiap_bulletin_${safe}`;
+}
+
+function initGrades() {
+    const g = {};
+    SUBJECTS.forEach((s) => {
+        g[s] = { ...DEFAULT_GRADES };
+    });
+    return g;
+}
+
 export default function Bulletin() {
-    const { user } = useAuth();
+    const { user, getAllStudents } = useAuth();
+    const { colors } = useTheme();
     const isTeacher = user?.role === "teacher";
 
-    const [grades, setGrades] = useState(null); // { subjectKey: { cp1, gs1, ... } }
-    const [loading, setLoading] = useState(true);
+    // Aluno cujo boletim está sendo exibido/editado
+    const [targetEmail, setTargetEmail] = useState(
+        isTeacher ? null : user?.email,
+    );
+
+    // Lista de alunos (professor)
+    const [students, setStudents] = useState([]);
+    const [loadingStudents, setLoadingStudents] = useState(false);
+    const [studentModal, setStudentModal] = useState(false);
+
+    const [grades, setGrades] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     // modal de edição
     const [modal, setModal] = useState(false);
@@ -52,35 +88,46 @@ export default function Bulletin() {
     const [editValor, setEditValor] = useState("");
     const [saving, setSaving] = useState(false);
 
-    // modal de detalhe (aluno)
+    // modal detalhe (aluno)
     const [modalVisible, setModalVisible] = useState(false);
     const [detail, setDetail] = useState(null);
 
+    // ── Carrega alunos quando professor abre ────────────────────────────────
     useEffect(() => {
-        async function load() {
-            try {
-                const json = await AsyncStorage.getItem(BULLETIN_KEY);
+        if (!isTeacher) return;
+        setLoadingStudents(true);
+        getAllStudents()
+            .then(setStudents)
+            .catch(() => {})
+            .finally(() => setLoadingStudents(false));
+    }, [isTeacher]);
+
+    // ── Carrega boletim do targetEmail ───────────────────────────────────────
+    useEffect(() => {
+        if (!targetEmail) {
+            setGrades(null);
+            return;
+        }
+        setLoading(true);
+        const key = bulletinKey(targetEmail);
+        SecureStore.getItemAsync(key)
+            .then((json) => {
                 if (json) {
                     setGrades(JSON.parse(json));
                 } else {
-                    const inicial = {};
-                    SUBJECTS.forEach((s) => {
-                        inicial[s] = { ...DEFAULT_GRADES };
-                    });
-                    await AsyncStorage.setItem(
-                        BULLETIN_KEY,
+                    const inicial = initGrades();
+                    SecureStore.setItemAsync(
+                        key,
                         JSON.stringify(inicial),
-                    );
+                    ).catch(() => {});
                     setGrades(inicial);
                 }
-            } catch (_) {
-            } finally {
-                setLoading(false);
-            }
-        }
-        load();
-    }, []);
+            })
+            .catch(() => setGrades(initGrades()))
+            .finally(() => setLoading(false));
+    }, [targetEmail]);
 
+    // ── Salva nota ───────────────────────────────────────────────────────────
     async function salvarNota() {
         setSaving(true);
         try {
@@ -91,8 +138,8 @@ export default function Bulletin() {
                     [editField]: editValor.trim() || "-",
                 },
             };
-            await AsyncStorage.setItem(
-                BULLETIN_KEY,
+            await SecureStore.setItemAsync(
+                bulletinKey(targetEmail),
                 JSON.stringify(novoGrades),
             );
             setGrades(novoGrades);
@@ -116,17 +163,76 @@ export default function Bulletin() {
         setModalVisible(true);
     }
 
-    const FIELD_LABELS = {
-        cp1: "CP 1º Sem",
-        gs1: "GS 1º Sem",
-        fa1: "FA 1º Sem",
-        cp2: "CP 2º Sem",
-        gs2: "GS 2º Sem",
-        fa2: "FA 2º Sem",
-        aulas: "Aulas",
-        pr: "Presença (%)",
-    };
+    // ── Helpers de estilo com tema ───────────────────────────────────────────
+    const s = makeStyles(colors);
 
+    // ── Estado: professor sem aluno selecionado ──────────────────────────────
+    if (isTeacher && !targetEmail) {
+        return (
+            <View style={s.container}>
+                <View style={s.pageHeader}>
+                    <Text style={s.title}>Boletim Acadêmico</Text>
+                    <Text style={s.subtitle}>
+                        Selecione um aluno para ver ou editar
+                    </Text>
+                </View>
+
+                {loadingStudents ? (
+                    <ActivityIndicator
+                        color="#FF0C5C"
+                        style={{ marginTop: 40 }}
+                    />
+                ) : students.length === 0 ? (
+                    <Text
+                        style={[
+                            s.subtitle,
+                            { textAlign: "center", marginTop: 40 },
+                        ]}
+                    >
+                        Nenhum aluno cadastrado ainda.
+                    </Text>
+                ) : (
+                    <FlatList
+                        data={students}
+                        keyExtractor={(item) => item.email}
+                        contentContainerStyle={{
+                            paddingHorizontal: 16,
+                            paddingBottom: 24,
+                        }}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={s.studentRow}
+                                onPress={() => setTargetEmail(item.email)}
+                                activeOpacity={0.75}
+                            >
+                                <View style={s.studentAvatar}>
+                                    <Text style={s.studentAvatarText}>
+                                        {item.name?.[0]?.toUpperCase() ?? "?"}
+                                    </Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={s.studentName}>
+                                        {item.name} {item.last_name}
+                                    </Text>
+                                    <Text style={s.studentSub}>
+                                        {item.email}
+                                        {item.class ? `  •  ${item.class}` : ""}
+                                    </Text>
+                                </View>
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={18}
+                                    color={colors.textMuted}
+                                />
+                            </TouchableOpacity>
+                        )}
+                    />
+                )}
+            </View>
+        );
+    }
+
+    // ── Loading boletim ──────────────────────────────────────────────────────
     if (loading || grades === null) {
         return (
             <View
@@ -134,6 +240,7 @@ export default function Bulletin() {
                     flex: 1,
                     justifyContent: "center",
                     alignItems: "center",
+                    backgroundColor: colors.bg,
                 }}
             >
                 <ActivityIndicator size="large" color="#FF0C5C" />
@@ -141,13 +248,32 @@ export default function Bulletin() {
         );
     }
 
+    // Nome do aluno sendo visualizado
+    const viewingStudent = isTeacher
+        ? students.find((st) => st.email === targetEmail)
+        : null;
+
     return (
-        <View style={styles.container}>
-            <View style={styles.pageHeader}>
-                <Text style={styles.title}>
-                    {user?.class || (isTeacher ? "Professor" : "Turma")} — 2026
+        <View style={s.container}>
+            <View style={s.pageHeader}>
+                {/* Botão voltar para lista (professor) */}
+                {isTeacher && (
+                    <TouchableOpacity
+                        style={s.backBtn}
+                        onPress={() => setTargetEmail(null)}
+                        activeOpacity={0.75}
+                    >
+                        <Ionicons name="arrow-back" size={20} color="#FF0C5C" />
+                        <Text style={s.backBtnText}>Alunos</Text>
+                    </TouchableOpacity>
+                )}
+
+                <Text style={s.title}>
+                    {isTeacher
+                        ? `${viewingStudent?.name ?? ""} ${viewingStudent?.last_name ?? ""}`
+                        : `${user?.class || "Turma"} — 2026`}
                 </Text>
-                <Text style={styles.subtitle}>
+                <Text style={s.subtitle}>
                     Boletim Acadêmico{isTeacher ? " (modo edição)" : ""}
                 </Text>
             </View>
@@ -155,60 +281,52 @@ export default function Bulletin() {
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalContent}
+                contentContainerStyle={s.horizontalContent}
             >
-                <View style={styles.tableCard}>
+                <View style={s.tableCard}>
                     {/* Cabeçalho superior */}
-                    <View style={styles.headerTopRow}>
-                        <View
-                            style={[styles.headerTopCell, styles.subjectHeader]}
-                        >
-                            <Text style={styles.headerTopCellText}></Text>
+                    <View style={s.headerTopRow}>
+                        <View style={[s.headerTopCell, s.subjectHeader]}>
+                            <Text style={s.headerTopCellText} />
                         </View>
-                        <View style={styles.groupBlock}>
-                            <Text style={styles.groupTitle}>1º SEMESTRE</Text>
+                        <View style={s.groupBlock}>
+                            <Text style={s.groupTitle}>1º SEMESTRE</Text>
                         </View>
-                        <View style={styles.groupBlock}>
-                            <Text style={styles.groupTitle}>2º SEMESTRE</Text>
+                        <View style={s.groupBlock}>
+                            <Text style={s.groupTitle}>2º SEMESTRE</Text>
                         </View>
-                        <View style={styles.resultGroup}>
-                            <Text style={styles.groupTitle}>RESULTADO</Text>
+                        <View style={s.resultGroup}>
+                            <Text style={s.groupTitle}>RESULTADO</Text>
                         </View>
                     </View>
 
                     {/* Subcabeçalho */}
-                    <View style={styles.headerBottomRow}>
+                    <View style={s.headerBottomRow}>
                         <View
                             style={[
-                                styles.headerBottomCell,
-                                styles.subjectHeader,
-                                styles.headerLabelContainer,
+                                s.headerBottomCell,
+                                s.subjectHeader,
+                                s.headerLabelContainer,
                             ]}
                         >
-                            <Text style={styles.headerLabelText}>
-                                DISCIPLINA
-                            </Text>
-                            <Text style={styles.headerLabelText}>\</Text>
-                            <Text style={styles.headerLabelText}>
-                                CATEGORIA
-                            </Text>
+                            <Text style={s.headerLabelText}>DISCIPLINA</Text>
+                            <Text style={s.headerLabelText}>\</Text>
+                            <Text style={s.headerLabelText}>CATEGORIA</Text>
                         </View>
                         {["CP", "GS", "FA", "MD", "CP", "GS", "FA", "MD"].map(
                             (h, i) => (
                                 <View
                                     key={i}
                                     style={[
-                                        styles.headerBottomCell,
-                                        h === "GS" && styles.headerGreen,
-                                        h === "MD" && styles.headerPink,
+                                        s.headerBottomCell,
+                                        h === "MD" && s.headerPink,
                                     ]}
                                 >
                                     <Text
                                         style={[
-                                            styles.headerBottomCellText,
-                                            h === "GS" &&
-                                                styles.headerGreenText,
-                                            h === "MD" && styles.headerPinkText,
+                                            s.headerBottomCellText,
+                                            h === "GS" && s.headerGreenText,
+                                            h === "MD" && s.headerPinkText,
                                         ]}
                                     >
                                         {h}
@@ -216,53 +334,42 @@ export default function Bulletin() {
                                 </View>
                             ),
                         )}
-                        <View style={styles.headerBottomCell}>
-                            <Text style={styles.headerBottomCellText}>
-                                AULAS
-                            </Text>
+                        <View style={s.headerBottomCell}>
+                            <Text style={s.headerBottomCellText}>AULAS</Text>
                         </View>
-                        <View
-                            style={[
-                                styles.headerBottomCell,
-                                styles.headerMuted,
-                            ]}
-                        >
+                        <View style={[s.headerBottomCell, s.headerMuted]}>
                             <Text
                                 style={[
-                                    styles.headerBottomCellText,
-                                    styles.headerMutedText,
+                                    s.headerBottomCellText,
+                                    s.headerMutedText,
                                 ]}
                             >
                                 PR(%)
                             </Text>
                         </View>
-                        <View style={styles.headerBottomCell}>
-                            <Text style={styles.headerBottomCellText}>MP</Text>
+                        <View style={s.headerBottomCell}>
+                            <Text style={s.headerBottomCellText}>MP</Text>
                         </View>
-                        <View style={styles.headerBottomCell}>
-                            <Text style={styles.headerBottomCellText}>EXA</Text>
+                        <View style={s.headerBottomCell}>
+                            <Text style={s.headerBottomCellText}>EXA</Text>
                         </View>
-                        <View
-                            style={[styles.headerBottomCell, styles.headerPink]}
-                        >
+                        <View style={[s.headerBottomCell, s.headerPink]}>
                             <Text
                                 style={[
-                                    styles.headerBottomCellText,
-                                    styles.headerPinkText,
+                                    s.headerBottomCellText,
+                                    s.headerPinkText,
                                 ]}
                             >
                                 MF
                             </Text>
                         </View>
-                        <View style={styles.situationHeader}>
-                            <Text style={styles.headerBottomCellText}>
-                                SITUAÇÃO
-                            </Text>
+                        <View style={s.situationHeader}>
+                            <Text style={s.headerBottomCellText}>SITUAÇÃO</Text>
                         </View>
                     </View>
 
                     {/* Linhas */}
-                    <ScrollView style={styles.bodyScroll}>
+                    <ScrollView style={s.bodyScroll}>
                         {SUBJECTS.map((subject, index) => {
                             const g = grades[subject] || DEFAULT_GRADES;
 
@@ -270,7 +377,7 @@ export default function Bulletin() {
                                 const val = g[field] ?? "-";
                                 return (
                                     <TouchableOpacity
-                                        style={styles.bodyCell}
+                                        style={s.bodyCell}
                                         onPress={() =>
                                             isTeacher
                                                 ? abrirEdicao(
@@ -286,47 +393,36 @@ export default function Bulletin() {
                                         }
                                         activeOpacity={0.6}
                                     >
-                                        <View style={styles.badge}>
+                                        <View style={s.badge}>
                                             <Text
                                                 style={[
-                                                    styles.cellText,
+                                                    s.cellText,
                                                     cor && { color: cor },
-                                                    val === "-" && styles.empty,
+                                                    val === "-" && s.empty,
                                                 ]}
                                             >
                                                 {val}
                                             </Text>
-                                            {isTeacher && (
-                                                <Ionicons
-                                                    name="create-outline"
-                                                    size={10}
-                                                    color="#FF0C5C"
-                                                    style={styles.icon}
-                                                />
-                                            )}
-                                            {!isTeacher && (
-                                                <Ionicons
-                                                    name="add"
-                                                    size={12}
-                                                    color="#FF0C5C"
-                                                    style={styles.icon}
-                                                />
-                                            )}
+                                            <Ionicons
+                                                name={
+                                                    isTeacher
+                                                        ? "create-outline"
+                                                        : "add"
+                                                }
+                                                size={isTeacher ? 10 : 12}
+                                                color="#FF0C5C"
+                                                style={s.icon}
+                                            />
                                         </View>
                                     </TouchableOpacity>
                                 );
                             }
 
                             return (
-                                <View key={index} style={styles.row}>
-                                    <View
-                                        style={[
-                                            styles.bodyCell,
-                                            styles.subjectCell,
-                                        ]}
-                                    >
+                                <View key={index} style={s.row}>
+                                    <View style={[s.bodyCell, s.subjectCell]}>
                                         <Text
-                                            style={styles.subjectCellText}
+                                            style={s.subjectCellText}
                                             numberOfLines={2}
                                         >
                                             {subject}
@@ -335,35 +431,35 @@ export default function Bulletin() {
                                     <Celula field="cp1" />
                                     <Celula field="gs1" cor="#039855" />
                                     <Celula field="fa1" />
-                                    <View style={styles.bodyCell}>
-                                        <Text style={styles.cellText}>-</Text>
+                                    <View style={s.bodyCell}>
+                                        <Text style={s.cellText}>-</Text>
                                     </View>
                                     <Celula field="cp2" />
                                     <Celula field="gs2" cor="#039855" />
                                     <Celula field="fa2" />
-                                    <View style={styles.bodyCell}>
-                                        <Text style={styles.cellText}>-</Text>
+                                    <View style={s.bodyCell}>
+                                        <Text style={s.cellText}>-</Text>
                                     </View>
                                     <Celula field="aulas" />
                                     <Celula field="pr" />
-                                    <View style={styles.bodyCell}>
-                                        <Text style={styles.cellText}>-</Text>
+                                    <View style={s.bodyCell}>
+                                        <Text style={s.cellText}>-</Text>
                                     </View>
-                                    <View style={styles.bodyCell}>
-                                        <Text style={styles.cellText}>-</Text>
+                                    <View style={s.bodyCell}>
+                                        <Text style={s.cellText}>-</Text>
                                     </View>
-                                    <View style={styles.bodyCell}>
+                                    <View style={s.bodyCell}>
                                         <Text
                                             style={[
-                                                styles.cellText,
-                                                styles.headerPink,
+                                                s.cellText,
+                                                s.headerPinkText,
                                             ]}
                                         >
                                             -
                                         </Text>
                                     </View>
-                                    <View style={styles.bodyCell}>
-                                        <Text style={styles.cellText}>-</Text>
+                                    <View style={s.bodyCell}>
+                                        <Text style={s.cellText}>-</Text>
                                     </View>
                                 </View>
                             );
@@ -374,40 +470,41 @@ export default function Bulletin() {
 
             {/* Modal edição (professor) */}
             <Modal visible={modal} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modal}>
-                        <Text style={styles.modalTitle}>
+                <View style={s.modalOverlay}>
+                    <View style={s.modal}>
+                        <Text style={s.modalTitle}>
                             Editar — {FIELD_LABELS[editField]}
                         </Text>
-                        <Text style={styles.modalSubtitle} numberOfLines={2}>
+                        <Text style={s.modalSubtitle} numberOfLines={2}>
                             {editSubject}
                         </Text>
                         <TextInput
-                            style={styles.modalInput}
+                            style={s.modalInput}
                             value={editValor}
                             onChangeText={setEditValor}
                             placeholder="Ex: 7.5"
+                            placeholderTextColor={colors.textMuted}
                             keyboardType="default"
                             autoFocus
                         />
-                        <View style={styles.modalBtns}>
+                        <View style={s.modalBtns}>
                             <TouchableOpacity
-                                style={styles.modalBtnCancel}
+                                style={s.modalBtnCancel}
                                 onPress={() => setModal(false)}
                             >
-                                <Text style={styles.modalBtnCancelText}>
+                                <Text style={s.modalBtnCancelText}>
                                     Cancelar
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={styles.modalBtnSave}
+                                style={s.modalBtnSave}
                                 onPress={salvarNota}
                                 disabled={saving}
                             >
                                 {saving ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.modalBtnSaveText}>
+                                    <Text style={s.modalBtnSaveText}>
                                         Salvar
                                     </Text>
                                 )}
@@ -419,12 +516,10 @@ export default function Bulletin() {
 
             {/* Modal detalhe (aluno) */}
             <Modal visible={modalVisible} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modal}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>
-                                {detail?.title}
-                            </Text>
+                <View style={s.modalOverlay}>
+                    <View style={s.modal}>
+                        <View style={s.modalHeader}>
+                            <Text style={s.modalTitle}>{detail?.title}</Text>
                             <TouchableOpacity
                                 onPress={() => setModalVisible(false)}
                             >
@@ -435,17 +530,17 @@ export default function Bulletin() {
                                 />
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.modalSubtitle} numberOfLines={2}>
+                        <Text style={s.modalSubtitle} numberOfLines={2}>
                             {detail?.subject}
                         </Text>
-                        <Text style={styles.detalheValor}>
+                        <Text style={s.detalheValor}>
                             {detail?.valor ?? "-"}
                         </Text>
                         <TouchableOpacity
-                            style={styles.closeBtn}
+                            style={s.closeBtn}
                             onPress={() => setModalVisible(false)}
                         >
-                            <Text style={styles.closeText}>Fechar</Text>
+                            <Text style={s.closeBtnText}>Fechar</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -454,211 +549,252 @@ export default function Bulletin() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F4F6FA", paddingTop: 18 },
-    pageHeader: { paddingHorizontal: 14, marginBottom: 10 },
-    title: { fontSize: 22, fontWeight: "bold", color: "#101828" },
-    subtitle: { fontSize: 13, marginTop: 2, color: "#667085" },
-    horizontalContent: { paddingHorizontal: 12, paddingBottom: 20 },
-    tableCard: {
-        backgroundColor: "#fff",
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "#E7EAF0",
-        overflow: "hidden",
-    },
-    headerTopRow: {
-        flexDirection: "row",
-        backgroundColor: "#FAFBFF",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E7EAF0",
-    },
-    headerTopCell: {
-        height: 48,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    headerTopCellText: {
-        fontWeight: "700",
-        color: "#391d1d",
-        fontSize: 12,
-        textAlign: "center",
-    },
-    subjectHeader: {
-        width: 240,
-        paddingHorizontal: 14,
-        alignItems: "flex-start",
-        justifyContent: "center",
-    },
-    headerLabelContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        height: 38,
-    },
-    headerLabelText: {
-        fontSize: 11,
-        fontWeight: "700",
-        color: "#344054",
-    },
-    groupBlock: {
-        width: 208,
-        borderLeftWidth: 1,
-        borderLeftColor: "#E7EAF0",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    resultGroup: {
-        width: 304,
-        borderLeftWidth: 1,
-        borderLeftColor: "#E7EAF0",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    groupTitle: { fontSize: 12, fontWeight: "700", color: "#1D2939" },
-    headerBottomRow: {
-        flexDirection: "row",
-        backgroundColor: "#fff",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E7EAF0",
-    },
-    headerBottomCell: {
-        width: 52,
-        height: 38,
-        justifyContent: "center",
-        alignItems: "center",
-        borderLeftWidth: 1,
-        borderLeftColor: "#F0F2F7",
-    },
-    headerBottomCellText: {
-        fontSize: 11,
-        fontWeight: "700",
-        color: "#344054",
-        textAlign: "center",
-    },
-    situationHeader: {
-        width: 96,
-        height: 38,
-        justifyContent: "center",
-        alignItems: "center",
-        borderLeftWidth: 1,
-        borderLeftColor: "#F0F2F7",
-    },
-    headerGreen: {},
-    headerGreenText: { color: "#039855" },
-    headerPink: {},
-    headerPinkText: { color: "#FF0C5C" },
-    headerMuted: {},
-    headerMutedText: { color: "#98A2B3" },
-    bodyScroll: { maxHeight: 520 },
-    row: {
-        flexDirection: "row",
-        minHeight: 66,
-        borderBottomWidth: 1,
-        borderBottomColor: "#F0F2F7",
-        backgroundColor: "#fff",
-    },
-    bodyCell: {
-        width: 52,
-        justifyContent: "center",
-        alignItems: "center",
-        borderLeftWidth: 1,
-        borderLeftColor: "#F7F8FB",
-    },
-    subjectCell: {
-        width: 240,
-        paddingHorizontal: 14,
-        justifyContent: "center",
-        alignItems: "flex-start",
-    },
-    subjectCellText: {
-        fontWeight: "500",
-        color: "#1D2939",
-        fontSize: 13,
-        lineHeight: 18,
-        textAlign: "left",
-    },
-    badge: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#F8FAFC",
-        paddingHorizontal: 4,
-        paddingVertical: 5,
-        borderRadius: 999,
-        minWidth: 38,
-    },
-    icon: { marginLeft: 2 },
-    cellText: { fontSize: 12, fontWeight: "600", color: "#344054" },
-    empty: { color: "#98A2B3" },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(16,24,40,0.35)",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 18,
-    },
-    modal: {
-        width: "100%",
-        maxWidth: 420,
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: 18,
-        borderWidth: 1,
-        borderColor: "#EAECF0",
-    },
-    modalHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    modalTitle: { fontSize: 16, fontWeight: "bold", color: "#101828", flex: 1 },
-    modalSubtitle: {
-        fontSize: 12,
-        color: "#667085",
-        marginTop: 4,
-        marginBottom: 14,
-    },
-    modalInput: {
-        borderWidth: 1,
-        borderColor: "#ddd",
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        fontSize: 15,
-        marginBottom: 8,
-    },
-    modalBtns: { flexDirection: "row", gap: 12, marginTop: 8 },
-    modalBtnCancel: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: "#ddd",
-        alignItems: "center",
-    },
-    modalBtnCancelText: { fontWeight: "bold", color: "#666" },
-    modalBtnSave: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 10,
-        backgroundColor: "#FF0C5C",
-        alignItems: "center",
-    },
-    modalBtnSaveText: { fontWeight: "bold", color: "#fff" },
-    detalheValor: {
-        fontSize: 28,
-        fontWeight: "bold",
-        color: "#FF0C5C",
-        textAlign: "center",
-        marginVertical: 16,
-    },
-    closeBtn: {
-        marginTop: 8,
-        backgroundColor: "#FF0C5C",
-        padding: 10,
-        borderRadius: 8,
-        alignItems: "center",
-    },
-    closeText: { color: "#fff", fontWeight: "bold" },
-});
+function makeStyles(c) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: c.bg, paddingTop: 18 },
+        pageHeader: { paddingHorizontal: 14, marginBottom: 10 },
+        title: { fontSize: 22, fontWeight: "bold", color: c.text },
+        subtitle: { fontSize: 13, marginTop: 2, color: c.textSecondary },
+
+        // Voltar
+        backBtn: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+            marginBottom: 6,
+        },
+        backBtnText: { color: "#FF0C5C", fontWeight: "bold", fontSize: 14 },
+
+        // Lista de alunos
+        studentRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: c.card,
+            borderRadius: 14,
+            padding: 14,
+            marginBottom: 10,
+            borderWidth: 1,
+            borderColor: c.cardBorder,
+            gap: 12,
+        },
+        studentAvatar: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#FF0C5C",
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        studentAvatarText: { color: "#fff", fontWeight: "bold", fontSize: 18 },
+        studentName: { fontSize: 15, fontWeight: "bold", color: c.text },
+        studentSub: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
+
+        // Tabela
+        horizontalContent: { paddingHorizontal: 12, paddingBottom: 20 },
+        tableCard: {
+            backgroundColor: c.card,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: c.cardBorder,
+            overflow: "hidden",
+        },
+        headerTopRow: {
+            flexDirection: "row",
+            backgroundColor: c.headerBg,
+            borderBottomWidth: 1,
+            borderBottomColor: c.cardBorder,
+        },
+        headerTopCell: {
+            height: 48,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        headerTopCellText: {
+            fontWeight: "700",
+            color: c.text,
+            fontSize: 12,
+            textAlign: "center",
+        },
+        subjectHeader: {
+            width: 240,
+            paddingHorizontal: 14,
+            alignItems: "flex-start",
+            justifyContent: "center",
+        },
+        headerLabelContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            height: 38,
+        },
+        headerLabelText: { fontSize: 11, fontWeight: "700", color: c.text },
+        groupBlock: {
+            width: 208,
+            borderLeftWidth: 1,
+            borderLeftColor: c.cardBorder,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        resultGroup: {
+            width: 304,
+            borderLeftWidth: 1,
+            borderLeftColor: c.cardBorder,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        groupTitle: { fontSize: 12, fontWeight: "700", color: c.text },
+        headerBottomRow: {
+            flexDirection: "row",
+            backgroundColor: c.card,
+            borderBottomWidth: 1,
+            borderBottomColor: c.cardBorder,
+        },
+        headerBottomCell: {
+            width: 52,
+            height: 38,
+            justifyContent: "center",
+            alignItems: "center",
+            borderLeftWidth: 1,
+            borderLeftColor: c.separator,
+        },
+        headerBottomCellText: {
+            fontSize: 11,
+            fontWeight: "700",
+            color: c.text,
+            textAlign: "center",
+        },
+        situationHeader: {
+            width: 96,
+            height: 38,
+            justifyContent: "center",
+            alignItems: "center",
+            borderLeftWidth: 1,
+            borderLeftColor: c.separator,
+        },
+        headerGreenText: { color: "#039855" },
+        headerPink: {},
+        headerPinkText: { color: "#FF0C5C" },
+        headerMuted: {},
+        headerMutedText: { color: c.textMuted },
+        bodyScroll: { maxHeight: 520 },
+        row: {
+            flexDirection: "row",
+            minHeight: 66,
+            borderBottomWidth: 1,
+            borderBottomColor: c.separator,
+            backgroundColor: c.card,
+        },
+        bodyCell: {
+            width: 52,
+            justifyContent: "center",
+            alignItems: "center",
+            borderLeftWidth: 1,
+            borderLeftColor: c.separator,
+        },
+        subjectCell: {
+            width: 240,
+            paddingHorizontal: 14,
+            justifyContent: "center",
+            alignItems: "flex-start",
+        },
+        subjectCellText: {
+            fontWeight: "500",
+            color: c.text,
+            fontSize: 13,
+            lineHeight: 18,
+            textAlign: "left",
+        },
+        badge: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: c.badgeBg,
+            paddingHorizontal: 4,
+            paddingVertical: 5,
+            borderRadius: 999,
+            minWidth: 38,
+        },
+        icon: { marginLeft: 2 },
+        cellText: { fontSize: 12, fontWeight: "600", color: c.text },
+        empty: { color: c.textMuted },
+
+        // Modais
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: c.overlay,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 18,
+        },
+        modal: {
+            width: "100%",
+            maxWidth: 420,
+            backgroundColor: c.card,
+            borderRadius: 16,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: c.cardBorder,
+        },
+        modalHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
+        modalTitle: {
+            fontSize: 16,
+            fontWeight: "bold",
+            color: c.text,
+            flex: 1,
+        },
+        modalSubtitle: {
+            fontSize: 12,
+            color: c.textSecondary,
+            marginTop: 4,
+            marginBottom: 14,
+        },
+        modalInput: {
+            borderWidth: 1,
+            borderColor: c.inputBorder,
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            fontSize: 15,
+            marginBottom: 8,
+            backgroundColor: c.inputBg,
+            color: c.text,
+        },
+        modalBtns: { flexDirection: "row", gap: 12, marginTop: 8 },
+        modalBtnCancel: {
+            flex: 1,
+            paddingVertical: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: c.inputBorder,
+            alignItems: "center",
+        },
+        modalBtnCancelText: { fontWeight: "bold", color: c.textSecondary },
+        modalBtnSave: {
+            flex: 1,
+            paddingVertical: 12,
+            borderRadius: 10,
+            backgroundColor: "#FF0C5C",
+            alignItems: "center",
+        },
+        modalBtnSaveText: { fontWeight: "bold", color: "#fff" },
+        detalheValor: {
+            fontSize: 28,
+            fontWeight: "bold",
+            color: "#FF0C5C",
+            textAlign: "center",
+            marginVertical: 16,
+        },
+        closeBtn: {
+            marginTop: 8,
+            backgroundColor: "#FF0C5C",
+            padding: 10,
+            borderRadius: 8,
+            alignItems: "center",
+        },
+        closeBtnText: { color: "#fff", fontWeight: "bold" },
+    });
+}
