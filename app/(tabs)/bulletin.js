@@ -11,11 +11,11 @@ import {
 } from 'react-native';
 
 // Dados estáticos do estudante (ex.: turma, nome)
-import { student } from '../data/student.data';
+import { student } from '../../data/student.data';
 
 // Ícones do Expo e dados do boletim (lista de disciplinas/entradas)
 import { Ionicons } from '@expo/vector-icons';
-import { bulletin } from '../data/bulletin.data';
+import { bulletin } from '../../data/bulletin.data';
 
 
 export default function Bulletin() {

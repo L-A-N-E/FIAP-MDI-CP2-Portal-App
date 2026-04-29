@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions } from 'react-native';
-import { student } from '../data/student.data';
+import { student } from '../../data/student.data';
 
 // Cardápio fixo (mock)
 const MENU_ITEMS = [
@@ -16,11 +16,11 @@ export default function Canteen() {
     // Carrinho: { [itemId]: quantidade }
     const [cart, setCart] = useState({});
 
-    // Eestado de envio
+    // Estado de envio
     const [submitting, setSubmitting] = useState(false);
     const [mensagem, setMensagem] = useState('');
 
-    // SNúmero gerado ao concluir pedido
+    // Número gerado ao concluir pedido
     const [meuNumero, setMeuNumero] = useState(null);
 
     // Fila mockada: número sendo chamado + próximos da fila

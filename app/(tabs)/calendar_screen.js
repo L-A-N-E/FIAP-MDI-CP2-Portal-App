@@ -2,7 +2,7 @@
 import { Calendar } from 'react-native-calendars';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useState } from 'react';
-import { checkpoints } from '../data/checkpoints.data';
+import { checkpoints } from '../../data/checkpoints.data';
 
 export default function CalendarScreen() {
 
@@ -37,7 +37,7 @@ export default function CalendarScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <Image
-                    source={require('../assets/FIAP.png')}
+                    source={require('../../assets/FIAP.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />
