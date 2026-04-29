@@ -131,7 +131,7 @@ export default function Login() {
 
                 {/* Link para cadastro */}
                 <TouchableOpacity
-                    onPress={() => router.push('/(auth)/cadastro')}
+                    onPress={() => router.push('/(auth)/register')}
                     style={styles.linkContainer}
                 >
                     <Text style={styles.linkTexto}>
