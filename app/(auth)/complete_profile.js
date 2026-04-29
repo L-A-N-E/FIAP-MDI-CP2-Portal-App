@@ -93,12 +93,12 @@ export default function CompletarPerfil() {
                     Preencha seus dados acadêmicos para continuar
                 </Text>
 
-                <CampoSimples label="RM" campoKey="rm" value={rm} onChange={setRm} erros={erros} setErros={setErros} placeholder="Ex: 556259" keyboardType="numeric" />
-                <CampoSimples label="Curso" campoKey="curso" value={curso} onChange={setCurso} erros={erros} setErros={setErros} placeholder="Ex: Engenharia de Software" />
-                <CampoSimples label="Semestre" campoKey="semestre" value={semestre} onChange={setSemestre} erros={erros} setErros={setErros} placeholder="Ex: 3º Ano" />
-                <CampoSimples label="Turma" campoKey="turma" value={turma} onChange={setTurma} erros={erros} setErros={setErros} placeholder="Ex: 3ESPH" />
-                <CampoSimples label="Período" campoKey="periodo" value={periodo} onChange={setPeriodo} erros={erros} setErros={setErros} placeholder="Ex: Matutino" />
-                <CampoSimples label="Unidade" campoKey="unidade" value={unidade} onChange={setUnidade} erros={erros} setErros={setErros} placeholder="Ex: FIAP Paulista" />
+                <CampoSimples label="RM" campoKey="rm" value={rm} onChange={setRm} erros={erros} setErros={setErros} placeholder="556259" keyboardType="numeric" />
+                <CampoSimples label="Curso" campoKey="curso" value={curso} onChange={setCurso} erros={erros} setErros={setErros} placeholder="Engenharia de Software" />
+                <CampoSimples label="Semestre" campoKey="semestre" value={semestre} onChange={setSemestre} erros={erros} setErros={setErros} placeholder="1" /> 
+                <CampoSimples label="Turma" campoKey="turma" value={turma} onChange={setTurma} erros={erros} setErros={setErros} placeholder="1ESPH" />
+                <CampoSimples label="Período" campoKey="periodo" value={periodo} onChange={setPeriodo} erros={erros} setErros={setErros} placeholder="Matutino" />
+                <CampoSimples label="Unidade" campoKey="unidade" value={unidade} onChange={setUnidade} erros={erros} setErros={setErros} placeholder="Paulista" />
 
                 <TouchableOpacity
                     style={styles.botao}
