@@ -113,7 +113,6 @@ export default function Home() {
                     ))}
                 </View>
             </View>
-
         </ScrollView>
     );
 }
@@ -136,7 +135,7 @@ const styles = StyleSheet.create({
     classTextTime: { color: '#171717', fontSize: 16, paddingBottom: 4, fontWeight: 'bold' },
     classTextClassroom: { fontSize: 12, color: '#FF0C5C' },
     classText: { color: '#444' },
-    sprintContainer: { flexDirection: 'row', justifyContent: 'center' },
+    sprintContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 20 },
     sprintCard: { width: '90%', backgroundColor: '#fff', padding: 15, borderRadius: 14 },
     sprintHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     todayDate: { fontSize: 16, color: '#171717' },
