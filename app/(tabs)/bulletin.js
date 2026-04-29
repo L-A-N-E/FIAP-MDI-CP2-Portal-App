@@ -5,6 +5,8 @@ import {
     ScrollView,
     StyleSheet,
     TouchableOpacity,
+    TouchableWithoutFeedback,
+    Keyboard,
     Modal,
     TextInput,
     ActivityIndicator,
@@ -27,26 +29,28 @@ const SUBJECTS = [
     "Testing, Compliance & Quality Assurance",
 ];
 
+const TOTAL_AULAS = 80;
+
 const DEFAULT_GRADES = {
     cp1: "-",
+    cp2: "-",
+    cp3: "-",
     gs1: "-",
     fa1: "-",
-    cp2: "-",
     gs2: "-",
     fa2: "-",
-    aulas: "80",
-    pr: "100",
+    faltas: "0",
 };
 
 const FIELD_LABELS = {
-    cp1: "CP 1º Sem",
+    cp1: "CP1",
+    cp2: "CP2",
+    cp3: "CP3",
     gs1: "GS 1º Sem",
     fa1: "FA 1º Sem",
-    cp2: "CP 2º Sem",
     gs2: "GS 2º Sem",
     fa2: "FA 2º Sem",
-    aulas: "Aulas",
-    pr: "Presença (%)",
+    faltas: "Faltas",
 };
 
 // Chave de boletim isolada por aluno
@@ -87,6 +91,13 @@ export default function Bulletin() {
     const [editField, setEditField] = useState(null);
     const [editValor, setEditValor] = useState("");
     const [saving, setSaving] = useState(false);
+
+    // modal CP (professor edita CP1a/CP1b/CP1c; aluno vê)
+    const [cpModal, setCpModal] = useState(false);
+    const [cpSubject, setCpSubject] = useState(null);
+
+    const [cpVals, setCpVals] = useState({ 1: "", 2: "", 3: "" });
+    const [savingCp, setSavingCp] = useState(false);
 
     // modal detalhe (aluno)
     const [modalVisible, setModalVisible] = useState(false);
@@ -157,7 +168,55 @@ export default function Bulletin() {
         setModal(true);
     }
 
+    // Calcula média dos 2 maiores entre CP1, CP2, CP3
+    function calcCpMedia(g) {
+        const vals = [1, 2, 3]
+            .map((n) => parseFloat(g[`cp${n}`]))
+            .filter((v) => !isNaN(v));
+        if (vals.length === 0) return "-";
+        if (vals.length === 1) return vals[0].toFixed(1);
+        const sorted = [...vals].sort((a, b) => b - a).slice(0, 2);
+        return (sorted.reduce((s, v) => s + v, 0) / sorted.length).toFixed(1);
+    }
+
+    function abrirCpModal(subject) {
+        setCpSubject(subject);
+        const g = grades?.[subject] || DEFAULT_GRADES;
+        setCpVals({
+            1: g.cp1 === "-" ? "" : g.cp1,
+            2: g.cp2 === "-" ? "" : g.cp2,
+            3: g.cp3 === "-" ? "" : g.cp3,
+        });
+        setCpModal(true);
+    }
+
+    async function salvarCp() {
+        setSavingCp(true);
+        try {
+            const updatedSubject = {
+                ...grades[cpSubject],
+                cp1: cpVals[1].trim() || "-",
+                cp2: cpVals[2].trim() || "-",
+                cp3: cpVals[3].trim() || "-",
+            };
+            const novoGrades = { ...grades, [cpSubject]: updatedSubject };
+            await SecureStore.setItemAsync(
+                bulletinKey(targetEmail),
+                JSON.stringify(novoGrades),
+            );
+            setGrades(novoGrades);
+            setCpModal(false);
+        } catch (_) {
+        } finally {
+            setSavingCp(false);
+        }
+    }
+
     function abrirDetalhe(title, subject, field) {
+        if (field === "cp") {
+            abrirCpModal(subject);
+            return;
+        }
         const valor = grades?.[subject]?.[field] ?? "-";
         setDetail({ title, valor, subject });
         setModalVisible(true);
@@ -335,7 +394,7 @@ export default function Bulletin() {
                             ),
                         )}
                         <View style={s.headerBottomCell}>
-                            <Text style={s.headerBottomCellText}>AULAS</Text>
+                            <Text style={s.headerBottomCellText}>FALTAS</Text>
                         </View>
                         <View style={[s.headerBottomCell, s.headerMuted]}>
                             <Text
@@ -428,35 +487,64 @@ export default function Bulletin() {
                                             {subject}
                                         </Text>
                                     </View>
-                                    <Celula field="cp1" />
+                                    {/* CP — média dos 2 maiores entre CP1, CP2, CP3 */}
+                                    <TouchableOpacity
+                                        style={s.bodyCell}
+                                        onPress={() => abrirCpModal(subject)}
+                                        activeOpacity={0.6}
+                                    >
+                                        <View style={s.badge}>
+                                            <Text
+                                                style={[
+                                                    s.cellText,
+                                                    calcCpMedia(g) === "-" && s.empty,
+                                                ]}
+                                            >
+                                                {calcCpMedia(g)}
+                                            </Text>
+                                            <Ionicons
+                                                name={isTeacher ? "create-outline" : "eye-outline"}
+                                                size={10}
+                                                color="#FF0C5C"
+                                                style={s.icon}
+                                            />
+                                        </View>
+                                    </TouchableOpacity>
                                     <Celula field="gs1" cor="#039855" />
                                     <Celula field="fa1" />
                                     <View style={s.bodyCell}>
                                         <Text style={s.cellText}>-</Text>
                                     </View>
-                                    <Celula field="cp2" />
                                     <Celula field="gs2" cor="#039855" />
                                     <Celula field="fa2" />
                                     <View style={s.bodyCell}>
                                         <Text style={s.cellText}>-</Text>
                                     </View>
-                                    <Celula field="aulas" />
-                                    <Celula field="pr" />
+                                    {/* Faltas */}
+                                    <Celula field="faltas" />
+                                    {/* Presença calculada */}
                                     <View style={s.bodyCell}>
-                                        <Text style={s.cellText}>-</Text>
+                                        {(() => {
+                                            const faltas = parseInt(g.faltas);
+                                            const pr = isNaN(faltas)
+                                                ? "-"
+                                                : Math.max(0, Math.round(((TOTAL_AULAS - faltas) / TOTAL_AULAS) * 100)) + "%";
+                                            const baixa = !isNaN(faltas) && ((TOTAL_AULAS - faltas) / TOTAL_AULAS) < 0.75;
+                                            return (
+                                                <Text style={[s.cellText, baixa && { color: "#e53935" }]}>
+                                                    {pr}
+                                                </Text>
+                                            );
+                                        })()}
                                     </View>
                                     <View style={s.bodyCell}>
                                         <Text style={s.cellText}>-</Text>
                                     </View>
                                     <View style={s.bodyCell}>
-                                        <Text
-                                            style={[
-                                                s.cellText,
-                                                s.headerPinkText,
-                                            ]}
-                                        >
-                                            -
-                                        </Text>
+                                        <Text style={s.cellText}>-</Text>
+                                    </View>
+                                    <View style={s.bodyCell}>
+                                        <Text style={[s.cellText, s.headerPinkText]}>-</Text>
                                     </View>
                                     <View style={s.bodyCell}>
                                         <Text style={s.cellText}>-</Text>
@@ -514,7 +602,124 @@ export default function Bulletin() {
                 </View>
             </Modal>
 
-            {/* Modal detalhe (aluno) */}
+            <Modal visible={cpModal} transparent animationType="fade">
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <View style={s.modalOverlay}>
+                    <View style={s.modal}>
+                        <View style={s.modalHeader}>
+                            <Text style={s.modalTitle}>
+                                Checkpoints
+                            </Text>
+                            <TouchableOpacity onPress={() => setCpModal(false)}>
+                                <Ionicons name="close" size={20} color="#FF0C5C" />
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={s.modalSubtitle} numberOfLines={2}>
+                            {cpSubject}
+                        </Text>
+
+                        {isTeacher ? (
+                            <>
+                                <Text style={s.modalLabel}>CP1</Text>
+                                <TextInput
+                                    style={s.modalInput}
+                                    value={cpVals[1]}
+                                    onChangeText={(v) => setCpVals((p) => ({ ...p, 1: v }))}
+                                    placeholder="Ex: 7.5"
+                                    placeholderTextColor={colors.textMuted}
+                                    keyboardType="numeric"
+                                />
+                                <Text style={s.modalLabel}>CP2</Text>
+                                <TextInput
+                                    style={s.modalInput}
+                                    value={cpVals[2]}
+                                    onChangeText={(v) => setCpVals((p) => ({ ...p, 2: v }))}
+                                    placeholder="Ex: 8.0"
+                                    placeholderTextColor={colors.textMuted}
+                                    keyboardType="numeric"
+                                />
+                                <Text style={s.modalLabel}>CP3</Text>
+                                <TextInput
+                                    style={s.modalInput}
+                                    value={cpVals[3]}
+                                    onChangeText={(v) => setCpVals((p) => ({ ...p, 3: v }))}
+                                    placeholder="Ex: 6.0"
+                                    placeholderTextColor={colors.textMuted}
+                                    keyboardType="numeric"
+                                />
+                                <Text style={[s.modalSubtitle, { marginTop: 6 }]}>
+                                    Média (2 maiores):{" "}
+                                    <Text style={{ fontWeight: "bold", color: "#FF0C5C" }}>
+                                        {(() => {
+                                            const vals = [1, 2, 3]
+                                                .map((l) => parseFloat(cpVals[l]))
+                                                .filter((v) => !isNaN(v));
+                                            if (vals.length === 0) return "-";
+                                            const sorted = [...vals].sort((a, b) => b - a).slice(0, 2);
+                                            return (sorted.reduce((s, v) => s + v, 0) / sorted.length).toFixed(1);
+                                        })()}
+                                    </Text>
+                                </Text>
+                                <View style={s.modalBtns}>
+                                    <TouchableOpacity
+                                        style={s.modalBtnCancel}
+                                        onPress={() => setCpModal(false)}
+                                    >
+                                        <Text style={s.modalBtnCancelText}>Cancelar</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={s.modalBtnSave}
+                                        onPress={salvarCp}
+                                        disabled={savingCp}
+                                    >
+                                        {savingCp ? (
+                                            <ActivityIndicator color="#fff" />
+                                        ) : (
+                                            <Text style={s.modalBtnSaveText}>Salvar</Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        ) : (
+                            <>
+                                {[1, 2, 3].map((l) => {
+                                    const g = grades?.[cpSubject] || DEFAULT_GRADES;
+                                    const val = g[`cp${l}`] ?? "-";
+                                    return (
+                                        <View key={l} style={s.cpDetailRow}>
+                                            <Text style={s.cpDetailLabel}>CP{l}</Text>
+                                            <Text style={[s.cpDetailVal, val === "-" && s.empty]}>
+                                                {val}
+                                            </Text>
+                                        </View>
+                                    );
+                                })}
+                                {(() => {
+                                    const g = grades?.[cpSubject] || DEFAULT_GRADES;
+                                    const media = calcCpMedia(g);
+                                    return (
+                                        <View style={[s.cpDetailRow, { borderTopWidth: 1, borderTopColor: colors.separator, marginTop: 8, paddingTop: 12 }]}>
+                                            <Text style={[s.cpDetailLabel, { color: "#FF0C5C" }]}>
+                                                Média (2 maiores)
+                                            </Text>
+                                            <Text style={[s.cpDetailVal, { color: "#FF0C5C" }]}>
+                                                {media}
+                                            </Text>
+                                        </View>
+                                    );
+                                })()}
+                                <TouchableOpacity
+                                    style={[s.closeBtn, { marginTop: 16 }]}
+                                    onPress={() => setCpModal(false)}
+                                >
+                                    <Text style={s.closeBtnText}>Fechar</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </View>
+                </View>
+                </TouchableWithoutFeedback>
+            </Modal>
             <Modal visible={modalVisible} transparent animationType="fade">
                 <View style={s.modalOverlay}>
                     <View style={s.modal}>
@@ -796,5 +1001,22 @@ function makeStyles(c) {
             alignItems: "center",
         },
         closeBtnText: { color: "#fff", fontWeight: "bold" },
+        modalLabel: {
+            fontSize: 14,
+            fontWeight: "600",
+            color: c.text,
+            marginBottom: 4,
+            marginTop: 8,
+        },
+        cpDetailRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingVertical: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: c.separator,
+        },
+        cpDetailLabel: { fontSize: 14, fontWeight: "600", color: c.text },
+        cpDetailVal: { fontSize: 18, fontWeight: "bold", color: c.text },
     });
 }
