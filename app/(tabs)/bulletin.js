@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 // Dados estáticos do estudante (ex.: turma, nome)
-import { student } from '../../data/student.data';
+import { useAuth } from '../../context/AuthContext';
 
 // Ícones do Expo e dados do boletim (lista de disciplinas/entradas)
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +19,8 @@ import { bulletin } from '../../data/bulletin.data';
 
 
 export default function Bulletin() {
-
+    // Desestrutura user do useAuth para ser usado depois
+    const { user } = useAuth(); 
     // Componente principal que renderiza o boletim.
     // `modalVisible`: controla se o modal de detalhes está aberto.
     const [modalVisible, setModalVisible] = useState(false);
@@ -115,7 +116,7 @@ export default function Bulletin() {
     return (
         <View style={styles.container}>
             <View style={styles.pageHeader}>
-                <Text style={styles.title}>{student.class} - 2026</Text>
+                <Text style={styles.title}>{user?.class} - 2026</Text>
                 <Text style={styles.subtitle}>Boletim Acadêmico</Text>
             </View>
 
