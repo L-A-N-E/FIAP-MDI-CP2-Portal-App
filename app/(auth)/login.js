@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Login() {
     const router = useRouter();
@@ -25,6 +26,7 @@ export default function Login() {
     const [erros, setErros] = useState({});
     const [loading, setLoading] = useState(false);
     const [erroGeral, setErroGeral] = useState("");
+    const [mostrarSenha, setMostrarSenha] = useState(false);
 
     function validar() {
         const novosErros = {};
@@ -62,11 +64,13 @@ export default function Login() {
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
             <ScrollView
                 contentContainerStyle={s.container}
                 keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
             >
                 <Image
                     source={require("../../assets/FIAP.png")}
@@ -100,18 +104,31 @@ export default function Login() {
 
                 <View style={s.campo}>
                     <Text style={s.label}>Senha</Text>
-                    <TextInput
-                        style={[s.input, erros.senha && s.inputErro]}
-                        placeholder="Mínimo 6 caracteres"
-                        placeholderTextColor={colors.textMuted}
-                        secureTextEntry
-                        value={senha}
-                        onChangeText={(v) => {
-                            setSenha(v);
-                            setErros((p) => ({ ...p, senha: undefined }));
-                            setErroGeral("");
-                        }}
-                    />
+                    <View style={s.inputWrapper}>
+                        <TextInput
+                            style={[s.input, s.inputComIcone, erros.senha && s.inputErro]}
+                            placeholder="Mínimo 6 caracteres"
+                            placeholderTextColor={colors.textMuted}
+                            secureTextEntry={!mostrarSenha}
+                            value={senha}
+                            onChangeText={(v) => {
+                                setSenha(v);
+                                setErros((p) => ({ ...p, senha: undefined }));
+                                setErroGeral("");
+                            }}
+                        />
+                        <TouchableOpacity
+                            style={s.olhoIcone}
+                            onPress={() => setMostrarSenha((p) => !p)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <Ionicons
+                                name={mostrarSenha ? "eye-outline" : "eye-off-outline"}
+                                size={20}
+                                color={colors.textMuted}
+                            />
+                        </TouchableOpacity>
+                    </View>
                     {erros.senha && (
                         <Text style={s.erroInline}>{erros.senha}</Text>
                     )}
@@ -213,5 +230,8 @@ function makeStyles(c) {
         linkContainer: { marginTop: 20 },
         linkTexto: { fontSize: 14, color: c.textSecondary },
         linkDestaque: { color: "#FF0C5C", fontWeight: "bold" },
+        inputWrapper: { position: "relative", justifyContent: "center" },
+        inputComIcone: { paddingRight: 44 },
+        olhoIcone: { position: "absolute", right: 14 },
     });
 }

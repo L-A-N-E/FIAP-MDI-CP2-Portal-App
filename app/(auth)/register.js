@@ -51,11 +51,14 @@ function CampoInput({
                     ]}
                     placeholder={placeholder}
                     placeholderTextColor={colors.textMuted}
-                    secureTextEntry={ehSenha && !mostrarSenha}
+                    secureTextEntry={Boolean(ehSenha && !mostrarSenha)}
                     keyboardType={keyboard ?? "default"}
                     autoCapitalize={
-                        keyboard === "email-address" ? "none" : "words"
+                        keyboard === "email-address" ? "none" : ehSenha ? "none" : "words"
                     }
+                    autoCorrect={ehSenha ? false : true}
+                    textContentType={ehSenha ? "password" : undefined}
+                    importantForAutofill={ehSenha ? "no" : undefined}
                     value={value}
                     onChangeText={(v) => {
                         onChange(v);
@@ -152,7 +155,8 @@ export default function Register() {
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
             <ScrollView
                 contentContainerStyle={[
@@ -160,6 +164,7 @@ export default function Register() {
                     { backgroundColor: colors.bg },
                 ]}
                 keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
             >
                 <Image
                     source={require("../../assets/FIAP.png")}
