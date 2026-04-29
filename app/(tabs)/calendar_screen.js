@@ -21,7 +21,7 @@ const EVENTS_KEY = "fiap_calendar_events";
 
 export default function CalendarScreen() {
     const { user } = useAuth();
-    const { colors } = useTheme();
+    const { colors, dark } = useTheme();
     const isTeacher = user?.role === "teacher";
 
     const [selected, setSelected] = useState("");
@@ -100,7 +100,9 @@ export default function CalendarScreen() {
         setEvents(novosEvents);
     }
 
-    const s = makeStyles(colors);
+    const calBg = dark ? colors.bg : colors.card;
+
+    const s = makeStyles(colors, calBg);
 
     if (loading) {
         return (
@@ -131,6 +133,7 @@ export default function CalendarScreen() {
             <View style={s.calendarContainer}>
                 <View style={s.calendarStyle}>
                     <Calendar
+                        key={dark ? "dark" : "light"}
                         onDayPress={(day) => setSelected(day.dateString)}
                         markedDates={{
                             ...markedDates,
@@ -145,8 +148,8 @@ export default function CalendarScreen() {
                             arrowColor: "#FF0C5C",
                             selectedDayBackgroundColor: "#FF0C5C",
                             dotColor: "#FF0C5C",
-                            backgroundColor: colors.card,
-                            calendarBackground: colors.card,
+                            backgroundColor: calBg,
+                            calendarBackground: calBg,
                             textSectionTitleColor: colors.textSecondary,
                             dayTextColor: colors.text,
                             textDisabledColor: colors.textMuted,
@@ -288,7 +291,7 @@ export default function CalendarScreen() {
     );
 }
 
-function makeStyles(c) {
+function makeStyles(c, calBg) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: c.bg },
         header: { paddingTop: 30, alignItems: "center", marginBottom: 10 },
@@ -305,7 +308,7 @@ function makeStyles(c) {
             padding: 20,
             borderRadius: 20,
             width: "90%",
-            backgroundColor: c.card,
+            backgroundColor: calBg,
         },
         addContainer: {
             flexDirection: "row",
