@@ -9,8 +9,8 @@ const USERS_KEY = '@fiap_users';
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
-    // verifica se há sessão salva na inicialização
     useEffect(() => {
         async function loadSession() {
             try {
@@ -27,7 +27,6 @@ export function AuthProvider({ children }) {
         loadSession();
     }, []);
 
-    // busca usuários (mockados e salvos no AsyncStorage)
     async function getAllUsers() {
         const { mockUsers } = await import('../data/users.data');
         let appUsers = [];
@@ -38,7 +37,6 @@ export function AuthProvider({ children }) {
         return [...mockUsers, ...appUsers];
     }
 
-    // valida credenciais e persiste sessão
     async function login(email, senha) {
         const users = await getAllUsers();
         const found = users.find(
@@ -49,12 +47,11 @@ export function AuthProvider({ children }) {
         if (!found) {
             throw new Error('E-mail ou senha incorretos.');
         }
-        const { senha: _, ...safeUser } = found; // não guarda a senha na sessão
+        const { senha: _, ...safeUser } = found;
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
         setUser(safeUser);
     }
 
-    // valida unicidade e salva novo usuário
     async function cadastrar(dados) {
         const users = await getAllUsers();
         const existe = users.find(
@@ -63,22 +60,45 @@ export function AuthProvider({ children }) {
         if (existe) {
             throw new Error('Este e-mail já está cadastrado.');
         }
-        // salva no AsyncStorage
+
         let appUsers = [];
         try {
             const json = await AsyncStorage.getItem(USERS_KEY);
             if (json) appUsers = JSON.parse(json);
         } catch (_) {}
+
         appUsers.push(dados);
         await AsyncStorage.setItem(USERS_KEY, JSON.stringify(appUsers));
 
-        // loga automaticamente após cadastro
         const { senha: _, ...safeUser } = dados;
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
         setUser(safeUser);
+        setNeedsProfileCompletion(true);
     }
 
-    // limpa sessão e volta ao estado inicial no logout
+    async function completarPerfil(dadosAcademicos) {
+        const updatedUser = { ...user, ...dadosAcademicos };
+
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
+
+        try {
+            const json = await AsyncStorage.getItem(USERS_KEY);
+            if (json) {
+                const appUsers = JSON.parse(json);
+                const idx = appUsers.findIndex(
+                    (u) => u.email.toLowerCase() === updatedUser.email.toLowerCase()
+                );
+                if (idx !== -1) {
+                    appUsers[idx] = { ...appUsers[idx], ...dadosAcademicos };
+                    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(appUsers));
+                }
+            }
+        } catch (_) {}
+
+        setUser(updatedUser);
+        setNeedsProfileCompletion(false);
+    }
+
     async function logout() {
         try {
             await AsyncStorage.removeItem(SESSION_KEY);
@@ -86,16 +106,26 @@ export function AuthProvider({ children }) {
             console.warn('Erro ao fazer logout:', e);
         }
         setUser(null);
+        setNeedsProfileCompletion(false);
     }
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, cadastrar, logout }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                isLoading,
+                needsProfileCompletion,
+                login,
+                cadastrar,
+                completarPerfil,
+                logout,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
 }
 
-// hook para consumir o context
 export function useAuth() {
     const ctx = useContext(AuthContext);
     if (!ctx) throw new Error('useAuth deve ser usado dentro de <AuthProvider>');

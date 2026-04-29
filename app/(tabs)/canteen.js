@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions } from 'react-native';
-import { student } from '../../data/student.data';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
-// Cardápio fixo (mock)
 const MENU_ITEMS = [
     { id: 'coxinha', name: 'Coxinha', price: 5.0 },
     { id: 'pao-de-queijo', name: 'Pão de queijo', price: 4.0 },
@@ -10,41 +9,30 @@ const MENU_ITEMS = [
 ];
 
 export default function Canteen() {
-    // Controle de tela
+    const { user } = useAuth();
+
     const [pagina, setPagina] = useState('pedidos');
-
-    // Carrinho: { [itemId]: quantidade }
     const [cart, setCart] = useState({});
-
-    // Estado de envio
     const [submitting, setSubmitting] = useState(false);
     const [mensagem, setMensagem] = useState('');
-
-    // Número gerado ao concluir pedido
     const [meuNumero, setMeuNumero] = useState(null);
-
-    // Fila mockada: número sendo chamado + próximos da fila
     const [chamando, setChamando] = useState(10);
     const [proximos, setProximos] = useState([11, 12]);
 
     const { width } = Dimensions.get('window');
     const contentMaxWidth = Math.min(width - 32, 460);
 
-    // Itens do cardápio (mock)
     const items = MENU_ITEMS;
 
     const cartCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
     const total = Object.entries(cart).reduce((sum, [id, qty]) => {
-        // Procura o item pelo ID para calcular o total
         const item = items.find(i => i.id === id);
         return sum + (item ? item.price * qty : 0);
     }, 0);
 
-    // Formata número para BRL (R$ 10,00)
     const formatBRL = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     const alterarQuantidade = (id, delta) => {
-        // Atualiza o carrinho com base no estado anterior
         setCart(prev => {
             const nextQty = Math.max(0, (prev[id] || 0) + delta);
             const next = { ...prev };
@@ -55,29 +43,19 @@ export default function Canteen() {
     };
 
     const concluirPedido = () => {
-        // Não deixa concluir sem itens, nem enquanto estiver enviando
         if (cartCount === 0 || submitting) return;
-
         setSubmitting(true);
         setMensagem('Enviando pedido...');
-
-        // Simula um envio: depois de 1s "confirma" e manda pra fila
         setTimeout(() => {
-            // Gera o próximo número com base no que já existe na fila
             const maiorNaFila = Math.max(chamando, ...proximos, 0);
             const numero = maiorNaFila + 1;
-
             setMeuNumero(numero);
-
-            // Coloca seu número na lista de próximos
             setProximos(prev => {
                 const next = [...prev, numero];
                 const unique = Array.from(new Set(next));
                 unique.sort((a, b) => a - b);
                 return unique;
             });
-
-            // Vai para a aba/tela da fila
             setPagina('fila');
             setSubmitting(false);
             setMensagem('Pedido concluído. Acompanhe sua posição na fila!');
@@ -85,7 +63,6 @@ export default function Canteen() {
     };
 
     const resetarPedido = () => {
-        // Reseta pedido para começar de novo
         setPagina('pedidos');
         setCart({});
         setMeuNumero(null);
@@ -99,52 +76,29 @@ export default function Canteen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header FIAP */}
+                {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Kitchenet</Text>
-                    <Text style={styles.title}>{student.unidade}</Text>
+                    {/* unidade vem do usuário logado via AuthContext */}
+                    <Text style={styles.title}>{user?.unidade ?? ''}</Text>
                     <Text style={styles.subtitle}>Faça seu pedido e acompanhe a fila</Text>
                 </View>
 
-                {/* Tabs internas (Pedido / Fila) */}
-                {/* Apenas para testar as abas estão funcionando */}
-                {/* <View style={[styles.tabs, { width: contentMaxWidth }]}>
-                    <TouchableOpacity
-                        style={[styles.tab, pagina === 'pedidos' && styles.tabActive]}
-                        onPress={() => setPagina('pedidos')}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={[styles.tabText, pagina === 'pedidos' && styles.tabTextActive]}>Pedido</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.tab, pagina === 'fila' && styles.tabActive]}
-                        onPress={() => setPagina('fila')}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={[styles.tabText, pagina === 'fila' && styles.tabTextActive]}>Fila</Text>
-                    </TouchableOpacity>
-                </View> */}
-
-                {/* Conteúdo principal: alterna entre Pedido e Fila */}
                 {pagina === 'pedidos' ? (
                     <View style={{ width: contentMaxWidth }}>
-                        {/* Cabeçalho do Cardápio */}
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Cardápio</Text>
                             <Text style={styles.sectionHint}>{cartCount} item(ns)</Text>
                         </View>
 
-                        {/* Estado vazio (verificação) */}
                         {items.length === 0 ? (
                             <View style={styles.emptyCard}>
                                 <Text style={styles.emptyTitle}>Nenhum item encontrado</Text>
                                 <Text style={styles.emptyText}>Tente novamente mais tarde.</Text>
                             </View>
                         ) : (
-                            /* Lista do cardápio */
                             items.map((item) => {
                                 const qty = cart[item.id] || 0;
-
                                 return (
                                     <View key={item.id} style={styles.card}>
                                         <View style={styles.rowBetween}>
@@ -152,9 +106,7 @@ export default function Canteen() {
                                                 <Text style={styles.itemName}>{item.name}</Text>
                                                 <Text style={styles.itemPrice}>{formatBRL(item.price)}</Text>
                                             </View>
-
                                             <View style={styles.qtyControls}>
-                                                {/* Botão de diminuir */}
                                                 <TouchableOpacity
                                                     style={[styles.qtyButton, qty === 0 && styles.qtyButtonDisabled]}
                                                     onPress={() => alterarQuantidade(item.id, -1)}
@@ -163,13 +115,9 @@ export default function Canteen() {
                                                 >
                                                     <Text style={styles.qtyButtonText}>-</Text>
                                                 </TouchableOpacity>
-
-                                                {/* Quantidade atual */}
                                                 <View style={styles.qtyBadge}>
                                                     <Text style={styles.qtyText}>{qty}</Text>
                                                 </View>
-
-                                                {/* Botão de aumentar */}
                                                 <TouchableOpacity
                                                     style={styles.qtyButton}
                                                     onPress={() => alterarQuantidade(item.id, +1)}
@@ -185,7 +133,6 @@ export default function Canteen() {
                             })
                         )}
 
-                        {/* Resumo do pedido */}
                         <View style={styles.summaryCard}>
                             <View style={styles.rowBetween}>
                                 <Text style={styles.summaryLabel}>Total</Text>
@@ -212,8 +159,6 @@ export default function Canteen() {
                         <View style={styles.card}>
                             <Text style={styles.queueTitle}>Fila de pedidos</Text>
                             <Text style={styles.queueSub}>Acompanhe sua chamada</Text>
-
-                            {/* Painel: o número e o número sendo chamado */}
                             <View style={styles.queueGrid}>
                                 <View style={styles.queueBox}>
                                     <Text style={styles.queueLabel}>Seu número</Text>
@@ -224,8 +169,6 @@ export default function Canteen() {
                                     <Text style={styles.queueNumber}>{chamando}</Text>
                                 </View>
                             </View>
-
-                            {/* Próximos da fila */}
                             <Text style={styles.nextTitle}>Próximos</Text>
                             <View style={styles.nextRow}>
                                 {proximos.length === 0 ? (
@@ -244,11 +187,8 @@ export default function Canteen() {
                                     })
                                 )}
                             </View>
-
                             {!!mensagem && <Text style={styles.feedback}>{mensagem}</Text>}
                         </View>
-
-                        {/* Ação para começar outro pedido */}
                         <TouchableOpacity
                             style={styles.secondaryButton}
                             onPress={resetarPedido}
@@ -264,257 +204,228 @@ export default function Canteen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
+    container: { 
+        flex: 1, 
+        backgroundColor: '#f5f5f5' 
     },
-    scrollContent: {
-        paddingBottom: 26,
-        alignItems: 'center',
-        paddingHorizontal: 16,
+    scrollContent: { 
+        paddingBottom: 26, 
+        alignItems: 'center', 
+        paddingHorizontal: 16 
     },
-    header: {
-        paddingTop: 30,
-        alignItems: 'center',
-        marginBottom: 10,
+    header: { 
+        paddingTop: 30, 
+        alignItems: 'center', 
+        marginBottom: 10 
     },
-    logo: {
-        width: 140,
-        height: 60,
+    title: { 
+        fontSize: 24, 
+        fontWeight: 'bold', 
+        textAlign: 'center', 
+        marginBottom: 6 
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 6,
+    subtitle: { 
+        color: '#666', 
+        fontSize: 14, 
+        textAlign: 'center' 
     },
-    subtitle: {
-        color: '#666',
-        fontSize: 14,
-        textAlign: 'center',
+    sectionHeader: { 
+        flexDirection: 'row', 
+        alignItems: 'flex-end', 
+        justifyContent: 'space-between', 
+        marginBottom: 10, 
+        paddingHorizontal: 2 
     },
-    tabs: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        borderRadius: 14,
-        padding: 6,
-        elevation: 2,
-        marginBottom: 14,
+    sectionTitle: { 
+        fontSize: 18, 
+        fontWeight: 'bold' 
     },
-    tab: {
-        flex: 1,
-        paddingVertical: 10,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
+    sectionHint: { 
+        fontSize: 12, 
+        color: '#666', 
+        fontWeight: 'bold' 
     },
-    tabActive: {
-        backgroundColor: '#FF0C5C',
+    card: { 
+        backgroundColor: '#fff', 
+        borderRadius: 14, 
+        padding: 16, 
+        elevation: 3, 
+        marginBottom: 12 
     },
-    tabText: {
-        fontWeight: 'bold',
-        color: '#666',
+    emptyCard: { 
+        backgroundColor: '#fff', 
+        borderRadius: 14, 
+        padding: 18, 
+        elevation: 2, 
+        marginBottom: 12, 
+        alignItems: 'center' 
     },
-    tabTextActive: {
-        color: '#fff',
+    emptyTitle: { 
+        fontSize: 16, 
+        fontWeight: 'bold', 
+        marginBottom: 6 
     },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-        paddingHorizontal: 2,
+    emptyText: { 
+        color: '#666', 
+        textAlign: 'center' 
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
+    rowBetween: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        gap: 12 
     },
-    sectionHint: {
-        fontSize: 12,
-        color: '#666',
-        fontWeight: 'bold',
+    itemName: { 
+        fontSize: 16, 
+        fontWeight: 'bold', 
+        marginBottom: 4 
     },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 14,
-        padding: 16,
-        elevation: 3,
-        marginBottom: 12,
+    itemPrice: { 
+        color: '#FF0C5C', 
+        fontWeight: 'bold' 
     },
-    emptyCard: {
-        backgroundColor: '#fff',
-        borderRadius: 14,
-        padding: 18,
-        elevation: 2,
-        marginBottom: 12,
-        alignItems: 'center',
+    qtyControls: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        gap: 8 
     },
-    emptyTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 6,
+    qtyButton: { 
+        width: 36, 
+        height: 36, 
+        borderRadius: 10, 
+        backgroundColor: '#FF0C5C', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
     },
-    emptyText: {
-        color: '#666',
-        textAlign: 'center',
+    qtyButtonDisabled: { 
+        backgroundColor: '#ff7aa5' 
     },
-    rowBetween: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
+    qtyButtonText: { 
+        color: '#fff', 
+        fontSize: 18, 
+        fontWeight: 'bold' 
     },
-    itemName: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 4,
+    qtyBadge: { 
+        minWidth: 36, 
+        height: 36, 
+        borderRadius: 10, 
+        backgroundColor: '#f5f5f5', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        paddingHorizontal: 8 
     },
-    itemPrice: {
-        color: '#FF0C5C',
-        fontWeight: 'bold',
+    qtyText: { 
+        fontWeight: 'bold', 
+        color: '#111' 
     },
-    qtyControls: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+    summaryCard: { 
+        marginTop: 4, 
+        backgroundColor: '#fff', 
+        borderRadius: 14, 
+        padding: 16, 
+        elevation: 3 
     },
-    qtyButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: '#FF0C5C',
-        alignItems: 'center',
-        justifyContent: 'center',
+    summaryLabel: { 
+        color: '#666', 
+        fontWeight: 'bold' 
     },
-    qtyButtonDisabled: {
-        backgroundColor: '#ff7aa5',
+    summaryValue: { 
+        fontSize: 16, 
+        fontWeight: 'bold', 
+        color: '#111' 
     },
-    qtyButtonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+    feedback: { 
+        marginTop: 10, 
+        textAlign: 'center', 
+        color: '#666', 
+        fontWeight: 'bold' 
     },
-    qtyBadge: {
-        minWidth: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: '#f5f5f5',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 8,
+    primaryButton: { 
+        marginTop: 12, 
+        backgroundColor: '#FF0C5C', 
+        paddingVertical: 14, 
+        borderRadius: 12, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
     },
-    qtyText: {
-        fontWeight: 'bold',
-        color: '#111',
+    primaryButtonDisabled: { 
+        backgroundColor: '#ff7aa5' 
     },
-    summaryCard: {
-        marginTop: 4,
-        backgroundColor: '#fff',
-        borderRadius: 14,
-        padding: 16,
-        elevation: 3,
+    primaryButtonText: { 
+        color: '#fff', 
+        fontWeightP: 'bold', 
+        fontSize: 16 
     },
-    summaryLabel: {
-        color: '#666',
-        fontWeight: 'bold',
+    queueTitle: { 
+        fontSize: 18, 
+        fontWeight: 'bold', 
+        textAlign: 'center', 
+        marginBottom: 4 
     },
-    summaryValue: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#111',
+    queueSub: { 
+        textAlign: 'center', 
+        color: '#666', 
+        marginBottom: 16 
     },
-    feedback: {
-        marginTop: 10,
-        textAlign: 'center',
-        color: '#666',
-        fontWeight: 'bold',
+    queueGrid: { 
+        flexDirection: 'row', 
+        gap: 12 
     },
-    primaryButton: {
-        marginTop: 12,
-        backgroundColor: '#FF0C5C',
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
+    queueBox: { 
+        flex: 1, 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: 14, 
+        paddingVertical: 14, 
+        paddingHorizontal: 12, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
     },
-    primaryButtonDisabled: {
-        backgroundColor: '#ff7aa5',
+    queueLabel: { 
+        color: '#666', 
+        fontWeight: 'bold', 
+        marginBottom: 8 
     },
-    primaryButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
+    queueNumber: { 
+        fontSize: 26, 
+        fontWeight: 'bold', 
+        color: '#FF0C5C' 
     },
-    queueTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 4,
+    nextTitle: { 
+        marginTop: 16, 
+        fontWeight: 'bold', 
+        textAlign: 'center' 
     },
-    queueSub: {
-        textAlign: 'center',
-        color: '#666',
-        marginBottom: 16,
+    nextRow: { 
+        marginTop: 10, 
+        flexDirection: 'row', 
+        justifyContent: 'center', 
+        gap: 10, 
+        flexWrap: 'wrap' 
     },
-    queueGrid: {
-        flexDirection: 'row',
-        gap: 12,
+    nextPill: { 
+        paddingVertical: 10, 
+        paddingHorizontal: 14, 
+        borderRadius: 999, 
+        backgroundColor: '#111' 
     },
-    queueBox: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-        borderRadius: 14,
-        paddingVertical: 14,
-        paddingHorizontal: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
+    nextPillMe: { 
+        backgroundColor: '#FF0C5C' 
     },
-    queueLabel: {
-        color: '#666',
-        fontWeight: 'bold',
-        marginBottom: 8,
+    nextPillText: { 
+        color: '#fff', 
+        fontWeight: 'bold' 
     },
-    queueNumber: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        color: '#FF0C5C',
+    secondaryButton: { 
+        marginTop: 12, 
+        backgroundColor: '#111', 
+        paddingVertical: 14, 
+        borderRadius: 12, 
+        alignItems: 'center', 
+        justifyContent: 'center' 
     },
-    nextTitle: {
-        marginTop: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    nextRow: {
-        marginTop: 10,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 10,
-        flexWrap: 'wrap',
-    },
-    nextPill: {
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 999,
-        backgroundColor: '#111',
-    },
-    nextPillMe: {
-        backgroundColor: '#FF0C5C',
-    },
-    nextPillText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    secondaryButton: {
-        marginTop: 12,
-        backgroundColor: '#111',
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    secondaryButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
+    secondaryButtonText: { 
+        color: '#fff', 
+        fontWeight: 'bold', 
+        fontSize: 16 
     },
 });
