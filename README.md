@@ -1,442 +1,259 @@
-# 📱 FIAP: Portal Acadêmico (Mobile) - CheckPoint 1 🚀
+# 🎓 FIAP Portal Acadêmico (Mobile) - CP2
 
 ## 📑 Índice
 
 1. [📌 Sobre o Projeto](#-sobre-o-projeto)
-2. [👥 Integrantes](#-integrantes)
-3. [🛠️ Tecnologias Utilizadas](#️-tecnologias-utilizadas)
-4. [⚙️ Como Rodar o Projeto](#️-como-rodar-o-projeto)
-5. [🎬 Demonstração](#-demonstração)
-6. [🧠 Decisões Técnicas](#-decisões-técnicas)
+2. [👥 Integrantes do Grupo](#-integrantes-do-grupo)
+3. [🛠️ Como Rodar o Projeto](#-como-rodar-o-projeto)
+4. [🎬 Demonstração Visual](#-demonstração-visual)
+5. [🧠 Decisões Técnicas](#-decisões-técnicas)
+6. [🌟 Diferencial Implementado](#-diferencial-implementado)
 7. [🔮 Próximos Passos](#-próximos-passos)
+
 
 
 ## 📌 Sobre o Projeto
 
-O **FIAP: Portal Acadêmico** consiste em um aplicativo mobile desenvolvido utilizando **React Native com Expo**, cujo objetivo é **modernizar e aprimorar a experiência do aplicativo acadêmico atualmente utilizado pela FIAP**.
+O **FIAP Portal Acadêmico** é uma aplicação mobile desenvolvida com React Native + Expo que centraliza funcionalidades essenciais da vida acadêmica em um único ambiente digital.
 
-Diante do crescimento institucional, refletido no aumento de alunos, disciplinas e demandas acadêmicas, surgem desafios relacionados à usabilidade e eficiência dos sistemas existentes.
-
-### ⚠️ Problemas identificados
-
-* 🔄 **Falta de centralização:** necessidade de acessar múltiplas plataformas (website, teams etc.) para obter informações acadêmicas.
-* ⏳ **Experiência fragmentada:** dificuldade em acompanhar prazos e atividades.
-* 🏫 **Baixa integração com o campus:** ausência de funcionalidades que atendam necessidades cotidianas (ex.: kitchenet).
-* 📱 **Interface desatualizada:** design pouco intuitivo e não otimizado para mobile.
-
-### 🎯 Importância da solução
-
-O aplicativo propõe atuar como um **hub central de organização acadêmica**, promovendo:
-
-* 📅 **Maior previsibilidade** na rotina do aluno
-* 🧩 **Autonomia na gestão acadêmica**
-* ⚡ **Otimização da experiência no campus**
-* 🎨 **Interface moderna e intuitiva**
-
-### ✅ Funcionalidades desta versão
-
-* 📚 Listagem de disciplinas
-* 📝 Visualização de atividades e entregas
-* 🍔 Sistema de pedidos na kitchenet
-* 🧭 Navegação entre telas com tabs
-
-> ℹ️ Observação: os dados utilizados são **mockados**.
+O aplicativo resolve o problema da **fragmentação de informações acadêmicas**, reunindo dados como notas, faltas e calendário em uma interface moderna, intuitiva e personalizada.
 
 
-## 👥 Integrantes
+### 🎯 CheckPoint 2
 
-* Alice Santos Bulhões: RM554499
-* Eduardo Oliveira Cardoso Madid: RM556349
-* Nicolas Haubricht Hainfellner: RM556259
-* Lucas Henzo Ide Yuki: RM554865
-* Guilherme da Cunha Melo: RM555310
+Neste checkpoint, o foco foi a **Arquitetura de Estado e Persistência de Dados**, evoluindo o protótipo do CP1 para uma aplicação funcional com:
 
-
-## 🛠️ Tecnologias Utilizadas
-
-<p align="center">
-  <img src="https://img.shields.io/badge/React%20Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native">
-  <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo">
-  <img src="https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E" alt="JavaScript">
-  <img src="https://img.shields.io/badge/Expo%20Router-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo Router">
-  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js">
-  <img src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm">
-</p>
-
-### 📚 Principais bibliotecas
-
-* 📍 **Expo Router**: Navegação baseada em arquivos
-* 📅 **react-native-calendars**: Componente de calendário
-* 🖼️ **expo-image-picker**: Seleção de imagens
-* 🔄 **react-native-swiper**: Carrossel de conteúdo
-* 🎨 **@expo/vector-icons (Ionicons)**: Ícones
+* Autenticação de usuários
+* Navegação protegida
+* Persistência de dados locais
+* Interface dinâmica com tema
 
 
-## ⚙️ Como Rodar o Projeto
+### 🚀 Melhorias em relação ao CP1
+
+* 🔐 Implementação de autenticação com controle de sessão
+* 💾 Persistência de dados com **SecureStore**
+* 👥 Separação de perfis: **Aluno e Professor**
+* 🎨 Suporte a tema dinâmico (claro/escuro)
+* 🔄 Refatoração completa para uso de Context API
+* 📊 Boletim interativo com regras de cálculo
+
+
+### ✅ Funcionalidades Implementadas
+
+* Login e Cadastro com validação
+
+* Boletim acadêmico:
+  * Visualização (Aluno)
+  * Edição (Professor)
+  * Cálculo automático de médias
+
+* Calendário acadêmico:
+  * Visualização de eventos
+  * Criação e remoção de eventos (Professor)
+
+* Navegação por abas
+* Persistência de dados local
+* Tema dinâmico com Context
+
+
+## 👥 Integrantes do Grupo
+
+* **Alice Santos Bulhões** - RM554499
+* **Eduardo Oliveira Cardoso Madid** - RM556349
+* **Nicolas Haubricht Hainfellner** - RM556259
+* **Guilherme da Cunha Melo** - RM555310
+
+
+## 🛠️ Como Rodar o Projeto
 
 ### 📋 Pré-requisitos
 
 * Node.js (LTS)
-* npm (ou yarn/pnpm)
-* Expo CLI (via `npx`)
-* Expo Go (dispositivo físico ou emulador)
+* npm ou yarn
+* Expo SDK 51+
+* Expo Go (celular ou emulador)
 
-### ▶️ Execução
+
+### ▶️ Passo a Passo
 
 ```bash
-# 1. Clonar o repositório
-git clone https://github.com/L-A-N-E/FIAP-APP-CheckPoint-1-Mobile-Development
+# Clonar o repositório
+git clone https://github.com/L-A-N-E/FIAP-MDI-CP2-Portal-App
 
-# 2. Acessar o diretório
-cd FIAP-APP-CheckPoint-1-Mobile-Development
+# Entrar na pasta
+cd FIAP-MDI-CP2-Portal-App
 
-# 3. Instalar dependências
+# Instalar dependências
 npm install
 
-# 4. Iniciar o projeto
+# Rodar o projeto
 npx expo start
 ```
 
-### 📱 Execução no dispositivo
+Após isso:
 
-* 📲 **Celular:** utilizar o Expo Go para leitura do QR Code (precisa estar na mesma rede)
-* 💻 **Emulador:** utilizar atalhos do Expo (`a` ou `i`)
+* Escaneie o QR Code com o Expo Go
+* Ou pressione `a` (Android) / `i` (iOS)
 
 
-## 🎬 Demonstração
+## 🎬 Demonstração Visual
 
 ### 🖼️ Prints das Telas
 
-* 🏠 Home
+* Tela de Login
 
-![Imagem Home](./docs/img/home.jpg)
+![Login](./docs/login.jpg)
 
-* 📊 Boletim
+* Tela de Cadastro
 
-![Imagem Boletim1](./docs/img/boletim_1.jpg)
-![Imagem Boletim2](./docs/img/boletim_2.jpg)
-![Imagem Boletim3](./docs/img/boletim_3.jpg)
+![Cadastro](./docs/criar_conta.jpg)
+![Completar Perfil](./docs/completar_perfil.jpg)
 
-* 📅 Calendário
+* Home
 
-![Imagem Calendário](./docs/img/calendario.jpg)
+![Home](./docs/home.jpg)
 
-* 🍔 Kitchenet
+* Boletim Acadêmico
 
-![Imagem Kitchenet1](./docs/img/kitchnet_1.jpg)
-![Imagem Kitchenet2](./docs/img/kitchnet_2.jpg)
+![Boletim Aluno](./docs/boletim.jpg)
+
+* Kitchenet
+
+![Kitchenet](./docs/kitchenet_menu.jpg)
+![Kitchenet2](./docs/kitchenet_fila.jpg)
+![Kitchenet3](./docs/kitchenet_historico.jpg)
+
+* Calendário Acadêmico
+
+![Calendário](./docs/calendario.jpg)
+
+* Perfil
+
+![Perfil](./docs/perfil.jpg)
+![Perfil2](./docs/perfil_sem_foto.jpg)
 
 
-* 👤 Perfil
+### 🎥 Vídeo do fluxo
 
-![Imagem Perfil1](./docs/img/perfil_1.jpg)
-![Imagem Perfil2](./docs/img/perfil_2.jpg)
-
-
-### 🎥 GIF
-
-* 🏠 Home
-
-![Gif Home](./docs/gif/home.gif)
-
-* 📊 Boletim
-
-![Gif Boletim](./docs/gif/boletim.gif)
-
-* 📅 Calendário
-
-![Gif Calendário](./docs/gif/calendario.gif)
-
-* 🍔 Kitchenet
-
-![Gif Kitchenet](./docs/gif/kitchenet.gif)
-
-* 👤 Perfil
-
-![Gif Perfil](./docs/gif/perfil.gif)
-
+* [Vídeo demonstrando o cadastro, login do aluno no aplicativo](./docs/demonstracao_aluno.mp4)
+* [Vídeo demonstrando o cadastro, login do professor no aplicativo](./docs/demonstracao_professor.mp4)
+* [Vídeo demonstrando a persistência do cadastro de eventos/boletim e visualização pelo aluno](./docs/verificar_cadastro_prof_no_aluno.mp4)
 
 ## 🧠 Decisões Técnicas
 
-Esta seção detalha **as escolhas arquiteturais, bibliotecas e padrões utilizados**, com foco em **escalabilidade, manutenibilidade e experiência do usuário**.
-
-
 ### 📂 Estrutura do Projeto
 
-O projeto adota o padrão **file-based routing** por meio do **Expo Router**, substituindo a abordagem tradicional baseada em configuração manual de rotas.
+```
+app/
+ ├── (auth)/
+ │   ├── login.jsx
+ │   ├── register.jsx
+ │   ├── complete_profile.jsx
+ │
+ ├── (tabs)/
+ │   ├── index.jsx
+ │   ├── bulletin.jsx
+ │   ├── calendar_screen.jsx
+ │   ├── canteen.jsx
+ │   ├── profile.jsx
 
-#### 🔎 Justificativa Técnica
+context/
+ ├── AuthContext.js
+ ├── ThemeContext.js
+```
 
-A decisão de utilizar esse modelo foi baseada nos seguintes fatores:
 
-* 🧩 **Redução de complexidade estrutural:**
-  Em arquiteturas tradicionais com `React Navigation`, é necessário configurar manualmente stacks, tabs e rotas. O Expo Router elimina essa necessidade ao mapear automaticamente arquivos para rotas.
+### 🔄 Contextos Utilizados
 
-* 📈 **Escalabilidade natural:**
-  A adição de novas telas não exige alterações em arquivos centrais de navegação, reduzindo risco de regressões.
+**AuthContext**
 
-* 🧠 **Melhor organização cognitiva:**
-  A estrutura baseada em diretórios reflete diretamente a navegação do app, facilitando entendimento por novos desenvolvedores.
+* Gerencia autenticação
+* Armazena usuário logado
+* Funções: login, cadastro, completar perfil
 
-* ⚙️ **Menor boilerplate:**
-  Reduz significativamente código repetitivo relacionado à navegação.
+**ThemeContext**
 
-📌 **Trade-off considerado:**
-Menor controle manual sobre navegação complexa (ex.: fluxos altamente customizados), porém aceitável para o escopo do projeto.
+* Gerencia cores do app
+* Permite alternância de tema
 
 
-### 📚 Bibliotecas Utilizadas
+### 🔐 Autenticação e Navegação Protegida
 
-#### 🔹 Expo (Ambiente Base)
+* Implementada com Context API
+* Controle baseado no estado do usuário
+* Rotas separadas:
 
-* **Problema resolvido:** complexidade de configuração do ambiente React Native puro.
-* **Justificativa técnica:**
+  * `(auth)` → públicas
+  * `(tabs)` → protegidas
+* Redirecionamento automático quando não autenticado
 
-  * 🔧 Elimina necessidade de configuração manual de Android/iOS nativo
-  * ⚡ Permite prototipação rápida
-  * 📱 Integração direta com APIs nativas (camera, galeria, sensores)
 
-📌 **Decisão estratégica:** priorizar produtividade e entrega funcional no contexto acadêmico.
+### 💾 Persistência de Dados
 
+Utilizado:
 
-#### 🔹 Expo Router
+👉 `expo-secure-store`
 
-* **Problema resolvido:** complexidade de navegação e manutenção de rotas.
-* **Justificativa técnica aprofundada:**
+#### Dados armazenados:
 
-  * 📁 **Convention over configuration:**
-    Reduz erros humanos ao evitar configurações manuais extensas.
+* Dados do usuário logado
+* Boletim acadêmico
+* Eventos do calendário
 
-  * 🔄 **Baixo acoplamento:**
-    Cada tela é independente, reduzindo impacto de mudanças.
+#### Chaves utilizadas:
 
-  * 🧪 **Facilidade de testes e manutenção:**
-    Telas podem ser testadas isoladamente.
+```js
+fiap_bulletin_<email>
+fiap_calendar_events
+```
 
-📌 **Impacto arquitetural:** melhora a **manutenibilidade** e reduz custo de evolução do sistema.
+## 🌟 Diferencial Implementado
 
+### ⭐ Boletim Acadêmico Interativo com Perfis Dinâmicos
 
-#### 🔹 react-native-calendars
+O sistema de boletim foi desenvolvido com comportamento adaptativo baseado no tipo de usuário (**Aluno ou Professor**), simulando um ambiente acadêmico real.
 
-* **Problema resolvido:** alta complexidade na implementação de calendários.
 
-* **Justificativa técnica:**
+Esse diferencial melhora significativamente a experiência do usuário ao permitir:
 
-  * 📅 Manipulação de datas envolve múltiplos estados (seleção, marcação, eventos)
-  * 🎨 UI de calendário exige tratamento de edge cases (meses, fusos, seleção múltipla)
+* Interação entre perfis distintos
+* Edição e visualização de dados em tempo real
+* Simulação de um sistema acadêmico completo
 
-* **Benefícios diretos:**
 
-  * ⏱️ Redução de tempo de desenvolvimento
-  * 🧪 Menor risco de bugs relacionados a datas
-  * 📊 Melhor legibilidade de prazos acadêmicos
+### ⚙️ Implementação
 
-📌 **Decisão:** utilizar solução consolidada ao invés de reinventar componente crítico.
+* Controle via `role` (`student` | `teacher`)
+* Professor pode editar notas e checkpoints
+* Aluno apenas visualiza
+* Interface adaptativa baseada no perfil
 
 
-#### 🔹 expo-image-picker
+### 🧠 Regras implementadas
 
-* **Problema resolvido:** acesso à galeria/câmera com compatibilidade multiplataforma.
+* Média automática dos 2 maiores CPs
+* Cálculo automático de frequência (%)
+* Atualização dinâmica da interface
 
-* **Justificativa técnica:**
 
-  * 📱 Abstrai diferenças entre Android e iOS
-  * 🔐 Gerencia permissões automaticamente
-  * ⚡ Integração simples com estado do React
+### 💾 Persistência
 
-* **Visão de evolução:**
+* Dados salvos com `SecureStore`
+* Separação por usuário:
 
-  * 🧠 Base para autenticação biométrica/facial
-  * 🆔 Possível integração com identificação do aluno
-
-📌 **Impacto:** aumenta realismo do sistema e prepara o projeto para cenários mais complexos.
-
-
-#### 🔹 react-native-swiper
-
-* **Problema resolvido:** navegação horizontal intuitiva entre conteúdos relacionados.
-
-* **Justificativa técnica:**
-
-  * 🧭 Permite segmentação de conteúdo por contexto (ex.: dias da semana)
-  * 📉 Reduz sobrecarga visual (evita listas extensas)
-  * 👆 Interação baseada em gesto (UX mais natural em mobile)
-
-📌 **Resultado:** melhora significativa na **experiência do usuário (UX)**.
-
-
-#### 🔹 @expo/vector-icons (Ionicons)
-
-* **Problema resolvido:** ausência de linguagem visual consistente.
-
-* **Justificativa técnica:**
-
-  * 🎨 Ícones reforçam significado das ações
-  * ⚡ Reduz necessidade de texto descritivo
-  * 📱 Melhora escaneabilidade da interface
-
-📌 **Impacto:** melhora **usabilidade e acessibilidade cognitiva**.
-
-
-### 🎣 Gerenciamento de Estado (Hooks)
-
-#### 🔹 useState
-
-* **Função:** controle de estado local dos componentes.
-
-* **Justificativa técnica:**
-
-  * ⚡ Simplicidade e baixo custo computacional
-  * 🔄 Reatividade imediata na UI
-  * 📦 Ideal para estados isolados (UI-driven)
-
-* **Aplicações no projeto:**
-
-  * Controle de modal
-  * Estado do carrinho
-  * Seleção de datas
-  * Avatar do usuário
-
-📌 **Decisão:** evitar soluções mais complexas (Redux, Context API) por não serem necessárias no escopo atual.
-
-
-#### 🔹 useEffect (não utilizado)
-
-* **Justificativa da ausência:**
-
-  * 📦 Dados são mockados (sem chamadas assíncronas)
-  * 🔄 Fluxo do app é síncrono
-  * ⚙️ Não há integração com APIs externas
-
-📌 **Planejamento futuro:**
-
-* 🔌 Consumo de APIs REST
-* 🔄 Atualização de dados em tempo real
-* 💾 Persistência local (AsyncStorage)
-
-
-### 🧭 Navegação (Tabs)
-
-* **Problema resolvido:** organização e acesso rápido às funcionalidades principais.
-
-#### 🔎 Justificativa Técnica
-
-* 📱 **Padrão de mercado (mobile-first):**
-  Tabs são amplamente utilizadas em apps reais (ex.: Instagram, Spotify).
-
-* 🧠 **Baixa carga cognitiva:**
-  Usuário entende rapidamente como navegar.
-
-* ⚡ **Acesso direto:**
-  Reduz número de interações para الوصول às funcionalidades.
-
-📌 **Impacto:** melhora **usabilidade, eficiência e retenção do usuário**.
-
-
-### 📱 Decisões por Tela
-
-#### 🏠 Home
-
-* **Problema:** excesso de informações simultâneas.
-* **Solução técnica:**
-
-  * Uso de swiper para segmentar conteúdo
-  * Ordenação por relevância
-
-📌 **Impacto:** melhor priorização de informações.
-
-
-#### 📊 Boletim
-
-* **Problema:** detalhamento sem poluir a interface.
-* **Solução:**
-
-  * Uso de Modal
-
-📌 **Impacto:** mantém contexto sem navegação extra.
-
-
-#### 📅 Calendário
-
-* **Problema:** dificuldade de visualizar prazos.
-* **Solução:**
-
-  * Marcação visual por datas
-
-📌 **Impacto:** melhora planejamento acadêmico.
-
-
-#### 🍔 Kitchenet
-
-* **Problema:** simular fluxo real de pedidos.
-* **Solução:**
-
-  * Estados sequenciais (pedido → envio → fila)
-
-📌 **Impacto:** experiência mais próxima de sistemas reais.
-
-
-#### 👤 Perfil
-
-* **Problema:** falta de personalização e identificação visual.
-* **Solução:**
-
-  * Upload de imagem
-
-📌 **Impacto:** mais fácil cadastro de biometria e identificação visual.
-
-### 📦 Componentes Fundamentais
-
-#### 🪟 Modal
-
-* **Justificativa técnica:**
-
-  * Evita navegação desnecessária e mantém contexto da tela atual
-
-#### 🖼️ ImagePicker
-
-* **Justificativa técnica:**
-  * Base para melhorias futuras, como a autenticação biométrica no campus, além de permitir personalização do perfil do usuário.
-
-#### 📅 Calendar
-
-* **Justificativa técnica:**
-
-  * Representação visual eficiente de dados temporais
-
-#### 📜 ScrollView
-
-* **Justificativa técnica:**
-
-  * Garante responsividade e evita overflow de layout
-
-
-### ✅ Conclusão Técnica
-
-As decisões adotadas priorizam:
-
-* ⚡ **Produtividade no desenvolvimento**
-* 🧠 **Simplicidade arquitetural**
-* 📈 **Facilidade de evolução futura**
-* 📱 **Qualidade da experiência do usuário**
-
+```js
+fiap_bulletin_<email>
+```
 
 ## 🔮 Próximos Passos
 
-A próxima etapa do projeto foca em evoluir de um protótipo funcional para uma aplicação **mais realista, integrada e escalável**.
+* 🔔 **Notificações Push Inteligentes**: Implementar notificações para alertar sobre novas notas, eventos no calendário e limite de faltas, utilizando serviços como Expo Notifications.
 
-* 🔔 **Notificações inteligentes**: Implementar notificações push (Expo Notifications) para lembretes de aulas, prazos e comunicados, aumentando engajamento e reduzindo perda de atividades.
+* 🔌 **Integração com API REST**: Conectar o app a um backend real para sincronização de dados acadêmicos (usuários, notas e eventos), substituindo o armazenamento local por persistência em nuvem.
 
-* 🔌 **Integração com APIs reais**: Substituir dados mockados por consumo de APIs (REST), permitindo dados dinâmicos, sincronização em tempo real e maior fidelidade ao ambiente acadêmico.
+* 🛡️ **Autenticação com Biometria**: Adicionar login via impressão digital ou Face ID utilizando `expo-local-authentication`, aumentando a segurança e melhorando a experiência do usuário.
 
-* 🛡️ **Autenticação segura**: Adicionar login com token (JWT) e evoluir para autenticação biométrica, garantindo maior segurança e controle de acesso.
+* 👨‍💼 **Cadastro e Gerenciamento via Admin**:Criar um fluxo administrativo onde professores ou administradores possam cadastrar alunos, gerenciar turmas e atribuir permissões, simulando um sistema acadêmico completo.
 
-* 💾 **Persistência de dados**: Utilizar armazenamento local (AsyncStorage) para salvar preferências do usuário, como avatar e configurações.
-
-* 🎨 **Melhorias de UX/UI**: Refinar interface com foco em acessibilidade, feedback visual (loading, estados vazios) e consistência de design.
-
-* ⚙️ **Escalabilidade e arquitetura**: Introduzir organização em camadas (ex.: `services/`, `components/`), facilitando manutenção e evolução do sistema.
-
-* 🌙 **Modo Escuro e Claro**: Implementar opção de modo escuro e claro para melhorar a experiência do usuário em diferentes condições de iluminação/gostos.
-
-* 🧑 **Coleta de Biometria**: Cadastro atualmente simulado com **ImagePicker**. Como evolução, será implementada **captura via câmera**, com **validação de rosto** e **padronização do processo**, visando maior **segurança** e integração futura com **acesso por reconhecimento facial nas catracas**.
+* ☁️ **Sincronização em Tempo Real**:  Implementar atualização automática dos dados entre diferentes usuários (ex: professor atualiza nota -> aluno vê instantaneamente), utilizando WebSockets ou Firebase.
