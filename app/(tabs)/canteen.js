@@ -7,8 +7,6 @@ import {
     ScrollView,
     Dimensions,
     ActivityIndicator,
-    Modal,
-    TextInput,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "../../context/AuthContext";
@@ -34,7 +32,6 @@ const maxW = Math.min(width - 32, 460);
 export default function Canteen() {
     const { user } = useAuth();
     const { colors } = useTheme();
-    const isTeacher = user?.role === "teacher";
 
     const [stock, setStock] = useState(null);
     const [orders, setOrders] = useState([]);
@@ -44,10 +41,6 @@ export default function Canteen() {
     const [submitting, setSubmitting] = useState(false);
     const [mensagem, setMensagem] = useState("");
     const [meuNumero, setMeuNumero] = useState(null);
-
-    const [editModal, setEditModal] = useState(false);
-    const [editItem, setEditItem] = useState(null);
-    const [editValor, setEditValor] = useState("");
 
     useEffect(() => {
         async function load() {
@@ -143,22 +136,6 @@ export default function Canteen() {
         }
     }
 
-    function abrirEdicaoEstoque(item) {
-        setEditItem(item);
-        setEditValor(String(stock?.[item.id] ?? 0));
-        setEditModal(true);
-    }
-
-    async function salvarEstoque() {
-        const novoStock = {
-            ...stock,
-            [editItem.id]: Math.max(0, parseInt(editValor) || 0),
-        };
-        await SecureStore.setItemAsync(STOCK_KEY, JSON.stringify(novoStock));
-        setStock(novoStock);
-        setEditModal(false);
-    }
-
     const s = makeStyles(colors);
 
     if (loading || stock === null) {
@@ -250,19 +227,7 @@ export default function Canteen() {
                                             </Text>
                                         </View>
                                         <View style={s.qtyControls}>
-                                            {isTeacher ? (
-                                                <TouchableOpacity
-                                                    style={s.editBtn}
-                                                    onPress={() =>
-                                                        abrirEdicaoEstoque(item)
-                                                    }
-                                                >
-                                                    <Text style={s.editBtnText}>
-                                                        Editar estoque
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ) : (
-                                                <>
+                                            <>
                                                     <TouchableOpacity
                                                         style={[
                                                             s.qtyButton,
@@ -313,15 +278,13 @@ export default function Canteen() {
                                                         </Text>
                                                     </TouchableOpacity>
                                                 </>
-                                            )}
                                         </View>
                                     </View>
                                 </View>
                             );
                         })}
 
-                        {!isTeacher && (
-                            <View style={s.summaryCard}>
+                        <View style={s.summaryCard}>
                                 <View style={s.rowBetween}>
                                     <Text style={s.summaryLabel}>Total</Text>
                                     <Text style={s.summaryValue}>
@@ -347,7 +310,6 @@ export default function Canteen() {
                                     </Text>
                                 </TouchableOpacity>
                             </View>
-                        )}
                     </View>
                 )}
 
@@ -440,39 +402,6 @@ export default function Canteen() {
                 )}
             </ScrollView>
 
-            <Modal visible={editModal} transparent animationType="fade">
-                <View style={s.modalOverlay}>
-                    <View style={s.modal}>
-                        <Text style={s.modalTitle}>
-                            Editar estoque — {editItem?.name}
-                        </Text>
-                        <TextInput
-                            style={s.modalInput}
-                            value={editValor}
-                            onChangeText={setEditValor}
-                            keyboardType="numeric"
-                            placeholder="Quantidade"
-                            placeholderTextColor={colors.textMuted}
-                        />
-                        <View style={s.modalBtns}>
-                            <TouchableOpacity
-                                style={s.modalBtnCancel}
-                                onPress={() => setEditModal(false)}
-                            >
-                                <Text style={s.modalBtnCancelText}>
-                                    Cancelar
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={s.modalBtnSave}
-                                onPress={salvarEstoque}
-                            >
-                                <Text style={s.modalBtnSaveText}>Salvar</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </View>
     );
 }
@@ -563,13 +492,6 @@ function makeStyles(c) {
         itemPrice: { color: "#FF0C5C", fontWeight: "bold" },
         stockText: { fontSize: 11, color: c.textMuted, marginTop: 2 },
         stockVazio: { color: "#e53935" },
-        editBtn: {
-            backgroundColor: "#FF0C5C",
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 8,
-        },
-        editBtnText: { color: "#fff", fontWeight: "bold", fontSize: 12 },
         qtyControls: { flexDirection: "row", alignItems: "center", gap: 8 },
         qtyButton: {
             width: 36,
@@ -650,53 +572,5 @@ function makeStyles(c) {
             fontWeight: "bold",
             fontSize: 16,
         },
-        modalOverlay: {
-            flex: 1,
-            backgroundColor: c.overlay,
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 24,
-        },
-        modal: {
-            width: "100%",
-            backgroundColor: c.card,
-            borderRadius: 16,
-            padding: 20,
-        },
-        modalTitle: {
-            fontSize: 16,
-            fontWeight: "bold",
-            marginBottom: 16,
-            color: c.text,
-        },
-        modalInput: {
-            borderWidth: 1,
-            borderColor: c.inputBorder,
-            borderRadius: 10,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            fontSize: 15,
-            marginBottom: 16,
-            backgroundColor: c.inputBg,
-            color: c.text,
-        },
-        modalBtns: { flexDirection: "row", gap: 12 },
-        modalBtnCancel: {
-            flex: 1,
-            paddingVertical: 12,
-            borderRadius: 10,
-            borderWidth: 1,
-            borderColor: c.inputBorder,
-            alignItems: "center",
-        },
-        modalBtnCancelText: { fontWeight: "bold", color: c.textSecondary },
-        modalBtnSave: {
-            flex: 1,
-            paddingVertical: 12,
-            borderRadius: 10,
-            backgroundColor: "#FF0C5C",
-            alignItems: "center",
-        },
-        modalBtnSaveText: { fontWeight: "bold", color: "#fff" },
     });
 }

@@ -39,7 +39,6 @@ const DEFAULT_GRADES = {
     fa1: "-",
     gs2: "-",
     fa2: "-",
-    faltas: "0",
 };
 
 const FIELD_LABELS = {
@@ -50,7 +49,6 @@ const FIELD_LABELS = {
     fa1: "FA 1º Sem",
     gs2: "GS 2º Sem",
     fa2: "FA 2º Sem",
-    faltas: "Faltas",
 };
 
 // Chave de boletim isolada por aluno
@@ -393,9 +391,6 @@ export default function Bulletin() {
                                 </View>
                             ),
                         )}
-                        <View style={s.headerBottomCell}>
-                            <Text style={s.headerBottomCellText}>FALTAS</Text>
-                        </View>
                         <View style={[s.headerBottomCell, s.headerMuted]}>
                             <Text
                                 style={[
@@ -553,30 +548,25 @@ export default function Bulletin() {
                                     <View style={s.bodyCell}>
                                         <Text style={s.cellText}>-</Text>
                                     </View>
-                                    {/* Faltas */}
-                                    <Celula field="faltas" />
                                     {/* Presença calculada */}
                                     <View style={s.bodyCell}>
                                         {(() => {
-                                            const faltas = parseInt(
-                                                g.faltas ?? "0",
-                                            );
-                                            const pr = isNaN(faltas)
-                                                ? "100%"
-                                                : Math.max(
-                                                      0,
-                                                      Math.round(
-                                                          ((TOTAL_AULAS -
-                                                              faltas) /
-                                                              TOTAL_AULAS) *
-                                                              100,
-                                                      ),
-                                                  ) + "%";
+                                            const fa1 = parseInt(g.fa1);
+                                            const fa2 = parseInt(g.fa2);
+                                            const faltas = (isNaN(fa1) ? 0 : fa1) + (isNaN(fa2) ? 0 : fa2);
+                                            const pr =
+                                                Math.max(
+                                                    0,
+                                                    Math.round(
+                                                        ((TOTAL_AULAS - faltas) /
+                                                            TOTAL_AULAS) *
+                                                            100,
+                                                    ),
+                                                ) + "%";
                                             const baixa =
-                                                !isNaN(faltas) &&
                                                 (TOTAL_AULAS - faltas) /
                                                     TOTAL_AULAS <
-                                                    0.75;
+                                                0.75;
                                             return (
                                                 <Text
                                                     style={[
